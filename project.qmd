@@ -1,6 +1,7 @@
 ---
-title: "Problem Set 4"
-date: "February 7, 2026"
+title: "Final Project"
+Authors: "Sakkhi Raheel and Rajat Kanti Paul"
+date: "March 09, 2026"
 format: 
   pdf:
     include-in-header: 
@@ -189,7 +190,6 @@ def build_tract_features(acs_year: int) -> pd.DataFrame:
         out.loc[(out[c] < 0) | (out[c] > 1), c] = pd.NA
 
     return out
-
 
 def main():
     for election_year, acs_year in ELECTION_TO_ACS_API_YEAR.items():
