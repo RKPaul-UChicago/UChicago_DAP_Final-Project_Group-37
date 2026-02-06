@@ -1,0 +1,211 @@
+---
+title: "Problem Set 4"
+date: "February 7, 2026"
+format: 
+  pdf:
+    include-in-header: 
+       text: |
+         \usepackage{fvextra}
+         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+include-before-body:
+  text: |
+    \RecustomVerbatimEnvironment{verbatim}{Verbatim}{
+      showspaces = false,
+      showtabs = false,
+      breaksymbolleft={},
+      breaklines
+    }
+output:
+  echo: false
+  eval: false
+---
+"""
+ACS 5-year (tract-level) for Chicago project
+Pulls Cook County, IL census tracts via Census Data API and constructs:
+
+- median_hh_income
+- pct_college (BA+ among age 25+)
+- pct_black (Not Hispanic Black alone / total pop)
+- pct_hispanic (Hispanic or Latino / total pop)
+- pct_renter (renter occupied / occupied units)
+- pct_18_29 (age 18-29 / total pop)
+- vap (voting age population = total pop - under 18)
+
+Outputs one CSV per election year vintage:
+acs_2010.csv, acs_2014.csv, acs_2018.csv, acs_2020.csv, acs_2024.csv
+
+Notes:
+- Uses ACS 5-year endpoint years (2010, 2014, 2018, 2020, 2024). 
+- Table IDs: B19013 (median household income), B15003 / B15002 (educational attainment), B03002 (race and Hispanic origin), B25003 (housing tenure), and B01001 (age and voting age population).
+
+Educational attainment is measured using ACS tables B15003 for later years and B15002 for earlier ACS vintages where B15003 is unavailable; in both cases we compute the share of the population age 25 and over with a bachelor’s degree or higher.
+
+
+"""
+```{python}
+import os
+import time
+import requests
+import pandas as pd
+```
+```{python}
+
+STATE_FIPS = "17"   # Illinois
+COUNTY_FIPS = "031" # Cook County
+
+CENSUS_API_KEY = os.getenv("CENSUS_API_KEY", "").strip()
+
+ELECTION_TO_ACS_API_YEAR = {
+    2008: 2010,  # 2006–2010
+    2012: 2014,  # 2010–2014
+    2016: 2018,  # 2014–2018
+    2020: 2020,  # 2016–2020
+    2024: 2024,  # 2020–2024
+}
+
+OUTDIR = "data/raw/acs"
+os.makedirs(OUTDIR, exist_ok=True)
+
+
+def _request_json(url: str, params: dict, timeout: int = 60) -> list:
+    r = requests.get(url, params=params, timeout=timeout)
+    if r.status_code != 200:
+        raise RuntimeError(
+            f"HTTP {r.status_code}\nURL: {r.url}\nResponse: {r.text[:800]}"
+        )
+    data = r.json()
+    if not isinstance(data, list) or len(data) < 2:
+        raise RuntimeError(f"Unexpected API response format.\nURL: {r.url}\nGot: {data}")
+    return data
+
+
+def census_get_group(year: int, group: str) -> pd.DataFrame:
+    """
+    Download a full ACS 5-year 'group' (table) for all Cook County tracts.
+    """
+    base = f"https://api.census.gov/data/{year}/acs/acs5"
+    params = {
+        "get": f"group({group})",
+        "for": "tract:*",
+        "in": f"state:{STATE_FIPS} county:{COUNTY_FIPS}",
+    }
+    if CENSUS_API_KEY:
+        params["key"] = CENSUS_API_KEY
+
+    data = _request_json(base, params=params)
+    df = pd.DataFrame(data[1:], columns=data[0])
+
+    df["GEOID"] = df["state"] + df["county"] + df["tract"]
+    return df
+
+
+def to_num(df: pd.DataFrame, cols: list[str]) -> None:
+    for c in cols:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+
+
+def build_tract_features(acs_year: int) -> pd.DataFrame:
+    """
+    Build tract-level features for a given ACS endpoint year.
+    """
+    inc = census_get_group(acs_year, "B19013")  # income
+    edu = census_get_group(acs_year, "B15002")  # education (works for 2010 endpoint)
+    race = census_get_group(acs_year, "B03002") # race/hispanic
+    ten = census_get_group(acs_year, "B25003")  # renter
+    age = census_get_group(acs_year, "B01001")  # age structure, VAP
+
+    out = pd.DataFrame({"GEOID": inc["GEOID"]})
+
+    # Median household income
+    out["median_hh_income"] = pd.to_numeric(inc["B19013_001E"], errors="coerce")
+
+    # Percent college educated (BA+ among age 25+)
+    # Total 25+ = B15002_001E
+    # Male BA+ = 015E (BA) + 016E (MA) + 017E (Prof) + 018E (Doctorate)
+    # Female BA+ = 032E (BA) + 033E (MA) + 034E (Prof) + 035E (Doctorate)
+    edu_cols = [
+        "B15002_001E",
+        "B15002_015E","B15002_016E","B15002_017E","B15002_018E",
+        "B15002_032E","B15002_033E","B15002_034E","B15002_035E",
+    ]
+    edu = edu[["GEOID"] + edu_cols].copy()
+    to_num(edu, edu_cols)
+
+    edu["ba_plus"] = (
+        edu["B15002_015E"] + edu["B15002_016E"] + edu["B15002_017E"] + edu["B15002_018E"] +
+        edu["B15002_032E"] + edu["B15002_033E"] + edu["B15002_034E"] + edu["B15002_035E"]
+    )
+    edu["pct_college"] = edu["ba_plus"] / edu["B15002_001E"]
+    out = out.merge(edu[["GEOID", "pct_college"]], on="GEOID", how="left")
+
+    # Percent Black and Percent Hispanic
+    race_cols = ["B03002_001E", "B03002_004E", "B03002_012E"]
+    race = race[["GEOID"] + race_cols].copy()
+    to_num(race, race_cols)
+    race["pct_black"] = race["B03002_004E"] / race["B03002_001E"]
+    race["pct_hispanic"] = race["B03002_012E"] / race["B03002_001E"]
+    out = out.merge(race[["GEOID", "pct_black", "pct_hispanic"]], on="GEOID", how="left")
+
+    # Percent renter occupied
+    ten_cols = ["B25003_001E", "B25003_003E"]
+    ten = ten[["GEOID"] + ten_cols].copy()
+    to_num(ten, ten_cols)
+    ten["pct_renter"] = ten["B25003_003E"] / ten["B25003_001E"]
+    out = out.merge(ten[["GEOID", "pct_renter"]], on="GEOID", how="left")
+
+    # Age 18–29 share and Voting Age Population (VAP)
+    age_cols = [
+        "B01001_001E",
+        "B01001_003E","B01001_004E","B01001_005E","B01001_006E",
+        "B01001_027E","B01001_028E","B01001_029E","B01001_030E",
+        "B01001_007E","B01001_031E",
+        "B01001_008E","B01001_009E","B01001_010E",
+        "B01001_032E","B01001_033E","B01001_034E",
+        "B01001_011E","B01001_035E",
+    ]
+    age = age[["GEOID"] + age_cols].copy()
+    to_num(age, age_cols)
+
+    age["pop_total"] = age["B01001_001E"]
+    age["pop_under18"] = (
+        age["B01001_003E"] + age["B01001_004E"] + age["B01001_005E"] + age["B01001_006E"] +
+        age["B01001_027E"] + age["B01001_028E"] + age["B01001_029E"] + age["B01001_030E"]
+    )
+    age["vap"] = age["pop_total"] - age["pop_under18"]
+
+    age["pop_18_29"] = (
+        (age["B01001_007E"] + age["B01001_031E"]) +
+        (age["B01001_008E"] + age["B01001_009E"] + age["B01001_010E"] +
+         age["B01001_032E"] + age["B01001_033E"] + age["B01001_034E"]) +
+        (age["B01001_011E"] + age["B01001_035E"])
+    )
+    age["pct_18_29"] = age["pop_18_29"] / age["pop_total"]
+
+    out = out.merge(age[["GEOID", "vap", "pct_18_29"]], on="GEOID", how="left")
+
+    # Clean impossible shares
+    share_cols = ["pct_college", "pct_black", "pct_hispanic", "pct_renter", "pct_18_29"]
+    for c in share_cols:
+        out.loc[(out[c] < 0) | (out[c] > 1), c] = pd.NA
+
+    return out
+
+
+def main():
+    for election_year, acs_year in ELECTION_TO_ACS_API_YEAR.items():
+        print(f"Building ACS tract features for election {election_year} using ACS API year {acs_year}...")
+        df = build_tract_features(acs_year)
+
+        df.insert(0, "election_year", election_year)
+        outpath = os.path.join(OUTDIR, f"acs_{acs_year}_for_election_{election_year}.csv")
+        df.to_csv(outpath, index=False)
+        print(f"Saved: {outpath} | rows={len(df):,}")
+        time.sleep(0.5)
+
+    print("Done.")
+
+
+if __name__ == "__main__":
+    main()
+
+```
