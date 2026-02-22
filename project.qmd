@@ -48,6 +48,8 @@ import os
 import time
 import requests
 import pandas as pd
+from pathlib import Path
+import geopandas as gpd
 ```
 ```{python}
 
@@ -208,4 +210,115 @@ def main():
 if __name__ == "__main__":
     main()
 
+```
+
+#### Post-processing data cleaning 
+```{python}
+# Folder where ACS CSVs are saved
+data_dir = Path("data/raw/acs")
+
+
+files = [
+    "acs_2010_for_election_2008.csv",
+    "acs_2014_for_election_2012.csv",
+    "acs_2018_for_election_2016.csv",
+    "acs_2020_for_election_2020.csv",
+    "acs_2024_for_election_2024.csv",
+]
+
+for fname in files:
+    fpath = data_dir / fname
+    df = pd.read_csv(fpath)
+
+    # Ensuring median_hh_income negatives are set to zero
+    df["median_hh_income"] = pd.to_numeric(df["median_hh_income"], errors="coerce")
+    df.loc[df["median_hh_income"] < 0, "median_hh_income"] = 0
+
+    # Overwriting the same file
+    df.to_csv(fpath, index=False)
+
+```
+
+#### Pre-processing and cleaning Voter Turnout Files
+
+```{python}
+
+ROOT = Path(".")  # current folder
+
+voter_dir = ROOT / "Data - Voter turnout and registration(chicagoelections.gov)"
+
+years = [2008, 2012, 2016, 2020, 2024]
+
+def clean_voter_csv(path_in: Path, path_out: Path) -> None:
+    df = pd.read_csv(path_in, dtype=str)
+
+    # Dropping top 2 rows (citywide summary)
+    df = df.iloc[2:].reset_index(drop=True)
+
+    # Dropping completely blank rows
+    df = df.dropna(how="all").reset_index(drop=True)
+
+    first_col = df.columns[0]
+
+    # Normalizing first column (strip spaces, handle BOM)
+    fc = df[first_col].astype(str).str.strip()
+    df[first_col] = fc
+
+    # Ward header rows: "Ward X"
+    is_ward = fc.str.startswith("Ward ")
+
+    # Extracting ward number from ward rows and forward‑filling
+    ward_series = (
+        fc.where(is_ward)
+          .str.replace("Ward", "", n=1)
+          .str.strip()
+          .str.extract(r"(\d+)")[0]
+    )
+    df["Ward"] = ward_series.ffill()
+
+    # Findiing repeated precinct headers and ward totals
+    is_precinct_header = fc.eq("Precinct")
+    is_total = fc.str.startswith("Total")
+
+    # Keeping only precinct data rows
+    df_clean = df[~(is_ward | is_precinct_header | is_total)].copy()
+
+    # Standardizing columns
+    df_clean = df_clean.rename(columns={
+        df_clean.columns[0]: "Precinct",
+        df_clean.columns[1]: "Registered Voters",
+        df_clean.columns[2]: "Ballots Cast",
+        df_clean.columns[3]: "Turnout",
+    })
+    df_clean = df_clean[["Ward", "Precinct", "Registered Voters", "Ballots Cast", "Turnout"]]
+
+    # Ward / precinct numeric, allowing NA
+    df_clean["Ward"] = pd.to_numeric(df_clean["Ward"], errors="coerce").astype("Int64")
+    df_clean["Precinct"] = pd.to_numeric(df_clean["Precinct"], errors="coerce").astype("Int64")
+
+    # Save
+    df_clean.to_csv(path_out, index=False)
+
+# Runing the function for all years
+for year in years:
+    in_path = voter_dir / f"{year}.csv"
+    out_path = voter_dir / f"{year}_clean.csv"
+    clean_voter_csv(in_path, out_path)
+
+```
+
+
+
+
+```{python}
+
+ROOT = Path(".")
+
+
+geojson_path = ROOT / "Boundaries_-_City_20260206.geojson"
+
+gdf = gpd.read_file(geojson_path)
+
+
+print(gdf.columns)
 ```
