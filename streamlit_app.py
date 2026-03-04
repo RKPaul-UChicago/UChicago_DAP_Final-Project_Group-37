@@ -172,9 +172,9 @@ The project bridges two datasets that live at different geographic levels:
 
 * **American Community Survey (ACS) 5-Year Estimates** – demographic data
   (income, education, race, age, housing tenure) reported at the
-  **census-tract** level (~800 tracts in Chicago).
+  **census-tract** level (~850 tracts in Chicago).
 * **Chicago Board of Elections voter records** – precinct-level registration
-  and ballot counts (~2,200 precincts).
+  and ballot counts (~1,200 precincts).
 
 Because census tracts and voting precincts **do not share boundaries**, we use
 **area-weighted spatial interpolation** (via `gpd.sjoin` and geometric
