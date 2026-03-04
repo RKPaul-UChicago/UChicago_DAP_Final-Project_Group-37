@@ -60,18 +60,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="analysis_files/libs/clipboard/clipboard.min.js"></script>
-<script src="analysis_files/libs/quarto-html/quarto.js" type="module"></script>
-<script src="analysis_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="analysis_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
-<script src="analysis_files/libs/quarto-html/popper.min.js"></script>
-<script src="analysis_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="analysis_files/libs/quarto-html/anchor.min.js"></script>
-<link href="analysis_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="analysis_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="analysis_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="analysis_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="analysis_files/libs/bootstrap/bootstrap-d6a003b94517c951b2d65075d42fb01b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="analysis_html_files/libs/clipboard/clipboard.min.js"></script>
+<script src="analysis_html_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="analysis_html_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="analysis_html_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="analysis_html_files/libs/quarto-html/popper.min.js"></script>
+<script src="analysis_html_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="analysis_html_files/libs/quarto-html/anchor.min.js"></script>
+<link href="analysis_html_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="analysis_html_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="analysis_html_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="analysis_html_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="analysis_html_files/libs/bootstrap/bootstrap-d6a003b94517c951b2d65075d42fb01b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
 
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
@@ -195,54 +195,55 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> tempfile</span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> Image</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> vl_convert <span class="im">as</span> vlc</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>alt.renderers.enable(<span class="st">"png"</span>)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>alt.data_transformers.disable_max_rows()</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>alt.renderers.enable(<span class="st">"png"</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>alt.data_transformers.disable_max_rows()</span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> display_altair_png(chart, scale<span class="op">=</span><span class="dv">2</span>):</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    png_bytes <span class="op">=</span> vlc.vegalite_to_png(chart.to_dict(), scale<span class="op">=</span>scale)</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> tempfile.NamedTemporaryFile(suffix<span class="op">=</span><span class="st">".png"</span>) <span class="im">as</span> tmp:</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>        tmp.write(png_bytes)</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>        tmp.flush()</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        display(Image(filename<span class="op">=</span>tmp.name))</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Paths </span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>ROOT         <span class="op">=</span> Path(<span class="st">"."</span>)</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>DATA_ACS     <span class="op">=</span> ROOT <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"raw"</span> <span class="op">/</span> <span class="st">"acs"</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>DATA_VOTER   <span class="op">=</span> ROOT <span class="op">/</span> <span class="st">"Data - Voter turnout and registration(chicagoelections.gov)"</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>PRECINCT_DIR <span class="op">=</span> ROOT <span class="op">/</span> <span class="st">"Chicago precincts shapefiles"</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>TRACT_SHP    <span class="op">=</span> ROOT <span class="op">/</span> <span class="st">"Census Tract Shapefile (ACS Merging)"</span> <span class="op">/</span> <span class="st">"tl_2020_17_tract.shp"</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>CITY_BNDRY   <span class="op">=</span> ROOT <span class="op">/</span> <span class="st">"Boundaries_-_City_20260206.geojson"</span></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Coordinate Reference Systems </span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co"># UTM Zone 16N (EPSG:26916) — metre-based, area-accurate for Chicago</span></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>CRS_PROJ <span class="op">=</span> <span class="st">"EPSG:26916"</span></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>CRS_GEO  <span class="op">=</span> <span class="st">"EPSG:4326"</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Election-year → boundary/ACS file mapping </span></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>PRECINCT_FILES <span class="op">=</span> {</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2008</span>: <span class="st">"Precincts (-2010)(2008 and 2012 elections).geojson"</span>,</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2012</span>: <span class="st">"Precincts (-2010)(2008 and 2012 elections).geojson"</span>,</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2016</span>: <span class="st">"Precincts(2013-2022) (2016 and 2020 elections).geojson"</span>,</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2020</span>: <span class="st">"Precincts(2013-2022) (2016 and 2020 elections).geojson"</span>,</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2024</span>: <span class="st">"Precincts(2023-) (2024 elections).geojson"</span>,</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>ACS_FILES <span class="op">=</span> {</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2008</span>: <span class="st">"acs_2010_for_election_2008.csv"</span>,</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2012</span>: <span class="st">"acs_2014_for_election_2012.csv"</span>,</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2016</span>: <span class="st">"acs_2018_for_election_2016.csv"</span>,</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2020</span>: <span class="st">"acs_2020_for_election_2020.csv"</span>,</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2024</span>: <span class="st">"acs_2024_for_election_2024.csv"</span>,</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>DEMO_COLS      <span class="op">=</span> [<span class="st">"median_hh_income"</span>, <span class="st">"pct_college"</span>, <span class="st">"pct_black"</span>,</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"pct_hispanic"</span>, <span class="st">"pct_renter"</span>, <span class="st">"pct_18_29"</span>]</span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>ELECTION_YEARS <span class="op">=</span> [<span class="dv">2008</span>, <span class="dv">2012</span>, <span class="dv">2016</span>, <span class="dv">2020</span>, <span class="dv">2024</span>]</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Setup complete."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> display_altair_png(chart, scale<span class="op">=</span><span class="dv">2</span>):</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    png_bytes <span class="op">=</span> vlc.vegalite_to_png(chart.to_dict(), scale<span class="op">=</span>scale)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> tempfile.NamedTemporaryFile(suffix<span class="op">=</span><span class="st">".png"</span>) <span class="im">as</span> tmp:</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>        tmp.write(png_bytes)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        tmp.flush()</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        display(Image(filename<span class="op">=</span>tmp.name))</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Paths </span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>ROOT         <span class="op">=</span> Path(<span class="st">"."</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>DATA_ACS     <span class="op">=</span> ROOT <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"raw"</span> <span class="op">/</span> <span class="st">"acs"</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>DATA_VOTER   <span class="op">=</span> ROOT <span class="op">/</span> <span class="st">"Data - Voter turnout and registration(chicagoelections.gov)"</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>PRECINCT_DIR <span class="op">=</span> ROOT <span class="op">/</span> <span class="st">"Chicago precincts shapefiles"</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>TRACT_SHP    <span class="op">=</span> ROOT <span class="op">/</span> <span class="st">"Census Tract Shapefile (ACS Merging)"</span> <span class="op">/</span> <span class="st">"tl_2020_17_tract.shp"</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>CITY_BNDRY   <span class="op">=</span> ROOT <span class="op">/</span> <span class="st">"Boundaries_-_City_20260206.geojson"</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Coordinate Reference Systems </span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="co"># UTM Zone 16N (EPSG:26916) — metre-based, area-accurate for Chicago</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>CRS_PROJ <span class="op">=</span> <span class="st">"EPSG:26916"</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>CRS_GEO  <span class="op">=</span> <span class="st">"EPSG:4326"</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Election-year → boundary/ACS file mapping </span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>PRECINCT_FILES <span class="op">=</span> {</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2008</span>: <span class="st">"Precincts (-2010)(2008 and 2012 elections).geojson"</span>,</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2012</span>: <span class="st">"Precincts (-2010)(2008 and 2012 elections).geojson"</span>,</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2016</span>: <span class="st">"Precincts(2013-2022) (2016 and 2020 elections).geojson"</span>,</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2020</span>: <span class="st">"Precincts(2013-2022) (2016 and 2020 elections).geojson"</span>,</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2024</span>: <span class="st">"Precincts(2023-) (2024 elections).geojson"</span>,</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>ACS_FILES <span class="op">=</span> {</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2008</span>: <span class="st">"acs_2010_for_election_2008.csv"</span>,</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2012</span>: <span class="st">"acs_2014_for_election_2012.csv"</span>,</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2016</span>: <span class="st">"acs_2018_for_election_2016.csv"</span>,</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2020</span>: <span class="st">"acs_2020_for_election_2020.csv"</span>,</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2024</span>: <span class="st">"acs_2024_for_election_2024.csv"</span>,</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>DEMO_COLS      <span class="op">=</span> [<span class="st">"median_hh_income"</span>, <span class="st">"pct_college"</span>, <span class="st">"pct_black"</span>,</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"pct_hispanic"</span>, <span class="st">"pct_renter"</span>, <span class="st">"pct_18_29"</span>]</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>ELECTION_YEARS <span class="op">=</span> [<span class="dv">2008</span>, <span class="dv">2012</span>, <span class="dv">2016</span>, <span class="dv">2020</span>, <span class="dv">2024</span>]</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Setup complete."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Setup complete.</code></pre>
@@ -255,7 +256,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The cells below reproduce the original data-collection and cleaning scripts from <code>project.qmd</code>. They are set to <code>eval: false</code> because the output files already exist on disk; they are retained here for full reproducibility.</p>
 <section id="acs-5-year-data-download-via-census-api" class="level3">
 <h3 class="anchored" data-anchor-id="acs-5-year-data-download-via-census-api">1.1 ACS 5-Year Data Download via Census API</h3>
-<div id="e1802b9c" class="cell" data-execution_count="2">
+<div id="583ec51b" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>ACS API download — already run, output in data/raw/acs/</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Illinois / Cook County identifiers</span></span>
@@ -408,7 +409,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="acs-post-processing" class="level3">
 <h3 class="anchored" data-anchor-id="acs-post-processing">1.2 ACS Post-Processing</h3>
-<div id="dd688114" class="cell" data-execution_count="3">
+<div id="051dceb2" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>ACS post-processing — negative incomes set to NaN, file overwritten</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The Census API returns -666666666 for missing/suppressed income values.</span></span>
@@ -428,7 +429,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="voter-turnout-cleaning" class="level3">
 <h3 class="anchored" data-anchor-id="voter-turnout-cleaning">1.3 Voter Turnout Cleaning</h3>
-<div id="93901337" class="cell" data-execution_count="4">
+<div id="085b6c6e" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Voter turnout cleaning — ward-level CSVs parsed into precinct rows</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clean_voter_csv(path_in: Path, path_out: Path) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
@@ -1038,7 +1039,7 @@ Columns available     : ['STATEFP', 'COUNTYFP', 'TRACTCE', 'GEOID', 'NAME', 'NAM
 <span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>demo_labels <span class="op">=</span> {</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"median_hh_income"</span>: <span class="st">"Income"</span>,</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"median_hh_income"</span>: <span class="st">"Median Houshold Income"</span>,</span>
 <span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"pct_college"</span>:      <span class="st">"% College"</span>,</span>
 <span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"pct_black"</span>:        <span class="st">"% Black"</span>,</span>
 <span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"pct_hispanic"</span>:     <span class="st">"% Hispanic"</span>,</span>
@@ -1211,7 +1212,7 @@ Columns available     : ['STATEFP', 'COUNTYFP', 'TRACTCE', 'GEOID', 'NAME', 'NAM
 <div id="fig-turnout-dist" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-turnout-dist-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-turnout-dist-output-1.png" class="img-fluid figure-img">
+<img src="analysis_html_files/figure-html/fig-turnout-dist-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-turnout-dist-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;1: Distribution of precinct-level turnout rates across election years
@@ -1270,7 +1271,7 @@ Figure&nbsp;1: Distribution of precinct-level turnout rates across election year
 <div id="fig-avg-turnout" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-avg-turnout-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-avg-turnout-output-1.png" width="499" height="372" class="figure-img">
+<img src="analysis_html_files/figure-html/fig-avg-turnout-output-1.png" width="499" height="372" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-avg-turnout-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;2: Mean precinct-level turnout rate by election year
@@ -1350,7 +1351,7 @@ Figure&nbsp;2: Mean precinct-level turnout rate by election year
 <div id="fig-corr-heatmap" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-corr-heatmap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-corr-heatmap-output-1.png" class="img-fluid figure-img">
+<img src="analysis_html_files/figure-html/fig-corr-heatmap-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-corr-heatmap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;3: Spearman correlations between precinct turnout rate and demographic variables by year
@@ -1406,7 +1407,7 @@ Figure&nbsp;3: Spearman correlations between precinct turnout rate and demograph
 <div id="fig-corr-trends" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-corr-trends-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-corr-trends-output-1.png" width="696" height="475" class="figure-img">
+<img src="analysis_html_files/figure-html/fig-corr-trends-output-1.png" width="750" height="475" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-corr-trends-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;4: How turnout–demographic correlations change across election years (interactive)
@@ -1455,7 +1456,7 @@ Figure&nbsp;4: How turnout–demographic correlations change across election yea
 <div id="fig-scatter-income" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-scatter-income-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-scatter-income-output-1.png" class="img-fluid figure-img">
+<img src="analysis_html_files/figure-html/fig-scatter-income-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scatter-income-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;5: Precinct turnout rate vs median household income (each panel = one election year)
@@ -1503,7 +1504,7 @@ Figure&nbsp;5: Precinct turnout rate vs median household income (each panel = on
 <div id="fig-scatter-education" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-scatter-education-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-scatter-education-output-1.png" class="img-fluid figure-img">
+<img src="analysis_html_files/figure-html/fig-scatter-education-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scatter-education-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;6: Precinct turnout rate vs share with bachelor’s degree or higher
@@ -1557,7 +1558,7 @@ Figure&nbsp;6: Precinct turnout rate vs share with bachelor’s degree or higher
 <div id="fig-income-quintile" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-income-quintile-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-income-quintile-output-1.png" width="631" height="461" class="figure-img">
+<img src="analysis_html_files/figure-html/fig-income-quintile-output-1.png" width="631" height="461" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-income-quintile-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;7: Average turnout rate by income quintile and election year (interactive)
@@ -1611,7 +1612,7 @@ Figure&nbsp;7: Average turnout rate by income quintile and election year (intera
 <div id="fig-edu-quintile" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-edu-quintile-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-edu-quintile-output-1.png" width="631" height="461" class="figure-img">
+<img src="analysis_html_files/figure-html/fig-edu-quintile-output-1.png" width="631" height="461" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-edu-quintile-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;8: Average turnout rate by education quintile and election year (interactive)
@@ -1683,7 +1684,7 @@ Figure&nbsp;8: Average turnout rate by education quintile and election year (int
 <div id="fig-race-turnout" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-race-turnout-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-race-turnout-output-1.png" class="img-fluid figure-img">
+<img src="analysis_html_files/figure-html/fig-race-turnout-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-race-turnout-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;9: Precinct turnout vs share Black and Hispanic population
@@ -1767,7 +1768,7 @@ Figure&nbsp;9: Precinct turnout vs share Black and Hispanic population
 <div id="fig-renter-youth" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-renter-youth-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-renter-youth-output-1.png" width="813" height="383" class="figure-img">
+<img src="analysis_html_files/figure-html/fig-renter-youth-output-1.png" width="813" height="383" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-renter-youth-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;10: Turnout vs renter share and youth share (2024 election, interactive)
@@ -1819,7 +1820,7 @@ Figure&nbsp;10: Turnout vs renter share and youth share (2024 election, interact
 <div id="fig-reg-vs-turnout" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-reg-vs-turnout-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-reg-vs-turnout-output-1.png" class="img-fluid figure-img">
+<img src="analysis_html_files/figure-html/fig-reg-vs-turnout-output-1.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-reg-vs-turnout-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;11: Precinct registration rate vs turnout rate by election year
@@ -1848,17 +1849,17 @@ Figure&nbsp;11: Precinct registration rate vs turnout rate by election year
 <div class="cell-output cell-output-stdout">
 <pre><code>Spearman Correlations: Turnout Rate vs Demographic Variables:
 
-      Income  % College  % Black  % Hispanic  % Renter  % Age 18–29
-Year                                                               
-2008   0.426      0.522   -0.062      -0.221    -0.186        0.012
-2012   0.191      0.451    0.209      -0.471     0.108        0.075
-2016   0.686      0.815   -0.319      -0.142    -0.123        0.164
-2020   0.735      0.882   -0.384      -0.138    -0.101        0.197
-2024   0.717      0.901   -0.365      -0.294     0.009        0.209
+      Median Houshold Income  % College  % Black  % Hispanic  % Renter  % Age 18–29
+Year                                                                               
+2008                   0.426      0.522   -0.062      -0.221    -0.186        0.012
+2012                   0.191      0.451    0.209      -0.471     0.108        0.075
+2016                   0.686      0.815   -0.319      -0.142    -0.123        0.164
+2020                   0.735      0.882   -0.384      -0.138    -0.101        0.197
+2024                   0.717      0.901   -0.365      -0.294     0.009        0.209
 
 ALL YEARS POOLED:
 
-  Income              r = +0.436
+  Median Houshold Income  r = +0.436
   % College           r = +0.634
   % Black             r = -0.138
   % Hispanic          r = -0.269
@@ -1873,57 +1874,74 @@ ALL YEARS POOLED:
 <div id="cell-fig-choropleth" class="cell" data-execution_count="25">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>prec_2024_geo <span class="op">=</span> load_precinct_gdf(<span class="dv">2024</span>)</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>map_data <span class="op">=</span> prec_2024_geo.merge(</span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    master[master[<span class="st">"election_year"</span>] <span class="op">==</span> <span class="dv">2024</span>][[</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>        <span class="st">"precinct_id"</span>, <span class="st">"turnout_rate"</span>,</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>        <span class="st">"median_hh_income"</span>, <span class="st">"pct_black"</span>, <span class="st">"pct_college"</span></span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    ]],</span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    on<span class="op">=</span><span class="st">"precinct_id"</span>, how<span class="op">=</span><span class="st">"left"</span></span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to WGS 84 for Altair geoshape</span></span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>map_data_geo <span class="op">=</span> map_data.to_crs(CRS_GEO)</span>
-<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_choropleth(gdf, col, title, scheme):</span>
-<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Build an Altair geoshape choropleth for one variable."""</span></span>
-<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
-<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>        alt.Chart(gdf)</span>
-<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>        .mark_geoshape(stroke<span class="op">=</span><span class="st">"white"</span>, strokeWidth<span class="op">=</span><span class="fl">0.1</span>)</span>
-<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>        .encode(</span>
-<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span>alt.Color(<span class="ss">f"</span><span class="sc">{</span>col<span class="sc">}</span><span class="ss">:Q"</span>,</span>
-<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>                            scale<span class="op">=</span>alt.Scale(scheme<span class="op">=</span>scheme),</span>
-<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>                            title<span class="op">=</span>title),</span>
-<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>            tooltip<span class="op">=</span>[</span>
-<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>                alt.Tooltip(<span class="st">"precinct_id:N"</span>, title<span class="op">=</span><span class="st">"Precinct"</span>),</span>
-<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>                alt.Tooltip(<span class="ss">f"</span><span class="sc">{</span>col<span class="sc">}</span><span class="ss">:Q"</span>, <span class="bu">format</span><span class="op">=</span><span class="st">".3f"</span>, title<span class="op">=</span>title),</span>
-<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>            ],</span>
-<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>        .properties(width<span class="op">=</span><span class="dv">250</span>, height<span class="op">=</span><span class="dv">350</span>, title<span class="op">=</span><span class="ss">f"2024: </span><span class="sc">{</span>title<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>c1 <span class="op">=</span> make_choropleth(map_data_geo, <span class="st">"turnout_rate"</span>,      <span class="st">"Turnout Rate"</span>,    <span class="st">"redyellowgreen"</span>)</span>
-<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>c2 <span class="op">=</span> make_choropleth(map_data_geo, <span class="st">"median_hh_income"</span>,  <span class="st">"Median HH Income"</span>,<span class="st">"yelloworangered"</span>)</span>
-<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>c3 <span class="op">=</span> make_choropleth(map_data_geo, <span class="st">"pct_black"</span>,         <span class="st">"% Black"</span>,         <span class="st">"blues"</span>)</span>
-<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>c4 <span class="op">=</span> make_choropleth(map_data_geo, <span class="st">"pct_college"</span>,       <span class="st">"% College"</span>,       <span class="st">"purples"</span>)</span>
-<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>choropleth_chart <span class="op">=</span> (</span>
-<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>    alt.hconcat(c1, c2, c3, c4)</span>
-<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>    .properties(title<span class="op">=</span><span class="st">"Chicago 2024 Election — Spatial Patterns by Precinct"</span>)</span>
-<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a>display_altair_png(choropleth_chart, scale<span class="op">=</span><span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_turnout_choropleth(gdf, year):</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Convert GeoDataFrame to GeoJSON dict — Altair renders this reliably</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    geojson_data <span class="op">=</span> json.loads(gdf.to_json())</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>        alt.Chart(</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>            alt.Data(values<span class="op">=</span>geojson_data[<span class="st">'features'</span>])</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>        .mark_geoshape(stroke<span class="op">=</span><span class="st">'white'</span>, strokeWidth<span class="op">=</span><span class="fl">0.1</span>)</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>        .encode(</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span>alt.Color(</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>                <span class="st">'properties.turnout_rate:Q'</span>,</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>                scale<span class="op">=</span>alt.Scale(scheme<span class="op">=</span><span class="st">'redyellowgreen'</span>, domain<span class="op">=</span>[<span class="fl">0.2</span>, <span class="fl">0.9</span>]),</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>                title<span class="op">=</span><span class="st">'Turnout Rate'</span></span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>            tooltip<span class="op">=</span>[</span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>                alt.Tooltip(<span class="st">'properties.precinct_id:N'</span>, title<span class="op">=</span><span class="st">'Precinct'</span>),</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>                alt.Tooltip(<span class="st">'properties.turnout_rate:Q'</span>, <span class="bu">format</span><span class="op">=</span><span class="st">'.3f'</span>, title<span class="op">=</span><span class="st">'Turnout Rate'</span>),</span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>            ],</span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>        .project(<span class="bu">type</span><span class="op">=</span><span class="st">'identity'</span>, reflectY<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>        .properties(width<span class="op">=</span><span class="dv">180</span>, height<span class="op">=</span><span class="dv">280</span>, title<span class="op">=</span><span class="bu">str</span>(year))</span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Stroke-only layer to highlight precinct borders</span></span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>    borders <span class="op">=</span> base.mark_geoshape(</span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>        fillOpacity<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>        stroke<span class="op">=</span><span class="st">'black'</span>,       <span class="co"># or a dark grey like '#333333'</span></span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>        strokeWidth<span class="op">=</span><span class="fl">0.7</span></span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (fill <span class="op">+</span> borders).properties(</span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>        width<span class="op">=</span><span class="dv">180</span>, height<span class="op">=</span><span class="dv">280</span>, title<span class="op">=</span><span class="bu">str</span>(year)</span>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>charts <span class="op">=</span> []</span>
+<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> year <span class="kw">in</span> [<span class="dv">2008</span>, <span class="dv">2012</span>, <span class="dv">2016</span>, <span class="dv">2020</span>, <span class="dv">2024</span>]:</span>
+<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a>    precgeo <span class="op">=</span> load_precinct_gdf(year)</span>
+<span id="cb31-40"><a href="#cb31-40" aria-hidden="true" tabindex="-1"></a>    mapdata <span class="op">=</span> precgeo.merge(</span>
+<span id="cb31-41"><a href="#cb31-41" aria-hidden="true" tabindex="-1"></a>        master[master[<span class="st">'election_year'</span>] <span class="op">==</span> year][[<span class="st">'precinct_id'</span>, <span class="st">'turnout_rate'</span>]],</span>
+<span id="cb31-42"><a href="#cb31-42" aria-hidden="true" tabindex="-1"></a>        on<span class="op">=</span><span class="st">'precinct_id'</span>, how<span class="op">=</span><span class="st">'left'</span></span>
+<span id="cb31-43"><a href="#cb31-43" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb31-44"><a href="#cb31-44" aria-hidden="true" tabindex="-1"></a>    mapdatageo <span class="op">=</span> mapdata.to_crs(<span class="st">'EPSG:4326'</span>)</span>
+<span id="cb31-45"><a href="#cb31-45" aria-hidden="true" tabindex="-1"></a>    charts.append(make_turnout_choropleth(mapdatageo, year))</span>
+<span id="cb31-46"><a href="#cb31-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-47"><a href="#cb31-47" aria-hidden="true" tabindex="-1"></a>choropleth_chart <span class="op">=</span> (</span>
+<span id="cb31-48"><a href="#cb31-48" aria-hidden="true" tabindex="-1"></a>    alt.hconcat(<span class="op">*</span>charts)</span>
+<span id="cb31-49"><a href="#cb31-49" aria-hidden="true" tabindex="-1"></a>    .resolve_scale(color<span class="op">=</span><span class="st">'shared'</span>)</span>
+<span id="cb31-50"><a href="#cb31-50" aria-hidden="true" tabindex="-1"></a>    .properties(title<span class="op">=</span><span class="st">'Chicago Precinct-Level Voter Turnout Rate (2008–2024)'</span>)</span>
+<span id="cb31-51"><a href="#cb31-51" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb31-52"><a href="#cb31-52" aria-hidden="true" tabindex="-1"></a>display_altair_png(choropleth_chart, scale<span class="op">=</span><span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>  CRS: 26916</code></pre>
+<pre><code>  CRS: 26916
+  CRS: 26916
+  CRS: 26916
+  CRS: 26916
+  CRS: 26916</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div id="fig-choropleth" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-choropleth-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-choropleth-output-2.png" class="img-fluid figure-img">
+<img src="analysis_html_files/figure-html/fig-choropleth-output-2.png" class="img-fluid figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-choropleth-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;12: Spatial patterns: turnout, income, and racial composition for 2024
+Figure&nbsp;12: Precinct-level voter turnout rate across all five election years (2008–2024)
 </figcaption>
 </figure>
 </div>
@@ -1983,7 +2001,7 @@ Figure&nbsp;12: Spatial patterns: turnout, income, and racial composition for 20
 <div id="fig-turnout-gap" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-turnout-gap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="analysis_files/figure-html/fig-turnout-gap-output-1.png" width="637" height="377" class="figure-img">
+<img src="analysis_html_files/figure-html/fig-turnout-gap-output-1.png" width="637" height="377" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-turnout-gap-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;13: Turnout gap between top and bottom income quintile precincts by year

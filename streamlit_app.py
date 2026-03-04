@@ -339,71 +339,91 @@ else:
 
     st.markdown("---")
 
+    st.markdown(
+    """
+    <style>
+    /* center all segmented controls */
+    div[data-testid="stSegmentedControl"] {
+        display: flex;
+        justify-content: center;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+    )
+
     # Year selector (shared control for both charts below)
-    selected_year = st.select_slider(
+    col_left, col_center, col_right = st.columns([1, 2, 1])
+
+    with col_center:
+        selected_year = st.segmented_control(
         "Select Election Year",
         options=ELECTION_YEARS,
-        value=2024,
-        key="year_selector",
+        selection_mode="single",
+        default=2024,
+        format_func=lambda y: str(y),
+        key="year_segmented",
+        width="content",
     )
+
     
     year_data = master[master["election_year"] == selected_year].copy()
 
     # Two columns: Choropleth on left, Scatter on right
     col_map, col_scatter = st.columns(2)
 
-    # LEFT: Choropleth - Turnout Rate by Precinct (pydeck)
     with col_map:
         st.subheader(f"Turnout Rate by Precinct - {selected_year}")
 
         prec_gdf = load_precinct_gdf(selected_year)
+
         map_merge = prec_gdf.merge(
-            year_data[["precinct_id", "turnout_rate"]],
-            on="precinct_id",
-            how="left",
-        )
-        map_geo = gpd.GeoDataFrame(map_merge, geometry="geometry").to_crs(CRS_GEO)
-
-        # Convert to GeoJSON and inject fill colors
-        geo_json = json.loads(map_geo.to_json())
-        for feat in geo_json["features"]:
-            rate = feat["properties"].get("turnout_rate")
-            feat["properties"]["fill_color"] = turnout_to_color(rate)
-            if rate is not None and not pd.isna(rate):
-                feat["properties"]["turnout_pct"] = f"{rate * 100:.1f}%"
-            else:
-                feat["properties"]["turnout_pct"] = "N/A"
-
-        layer = pdk.Layer(
-            "GeoJsonLayer",
-            data=geo_json,
-            get_fill_color="properties.fill_color",
-            get_line_color=[255, 255, 255, 120],
-            get_line_width=10,
-            pickable=True,
-            stroked=True,
-            filled=True,
+        year_data[["precinct_id", "turnout_rate"]],
+        on="precinct_id",
+        how="left",
         )
 
-        view = pdk.ViewState(
-            latitude=41.83,
-            longitude=-87.68,
-            zoom=10,
-            pitch=0,
-        )
+    # NEW: keep only precincts that have turnout data
+    map_merge = map_merge[map_merge["turnout_rate"].notna()].copy()
 
-        deck = pdk.Deck(
-            layers=[layer],
-            initial_view_state=view,
-            map_style="mapbox://styles/mapbox/light-v10",
-            tooltip={
-                "text": "Precinct: {precinct_id}\nTurnout: {turnout_pct}"
-            },
-        )
-        st.pydeck_chart(deck, height=520, key=f"deck_{selected_year}")
+    map_geo = gpd.GeoDataFrame(map_merge, geometry="geometry").to_crs(CRS_GEO)
 
-        # Color legend for the choropleth
-        st.markdown(
+    geo_json = json.loads(map_geo.to_json())
+    for feat in geo_json["features"]:
+        rate = feat["properties"].get("turnout_rate")
+        feat["properties"]["fill_color"] = turnout_to_color(rate)
+        if rate is not None and not pd.isna(rate):
+            feat["properties"]["turnout_pct"] = f"{rate * 100:.1f}%"
+        else:
+            feat["properties"]["turnout_pct"] = "N/A"
+
+    layer = pdk.Layer(
+        "GeoJsonLayer",
+        data=geo_json,
+        get_fill_color="properties.fill_color",
+        get_line_color=[255, 255, 255, 120],
+        get_line_width=10,
+        pickable=True,
+        stroked=True,
+        filled=True,
+    )
+
+    view = pdk.ViewState(
+        latitude=41.83,
+        longitude=-87.68,
+        zoom=10,
+        pitch=0,
+    )
+
+    deck = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view,
+        map_style="mapbox://styles/mapbox/light-v10",
+        tooltip={"text": "Precinct: {precinct_id}\nTurnout: {turnout_pct}"},
+    )
+    st.pydeck_chart(deck, height=520, key=f"deck_{selected_year}")
+    # Color legend for the choropleth
+    st.markdown(
             """
             <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
               <span style="font-size:13px;">Low (0%)</span>
@@ -416,7 +436,7 @@ else:
                  margin-top:2px;">Turnout Rate</div>
             """,
             unsafe_allow_html=True,
-        )
+    )
 
     # RIGHT: Scatter - Turnout vs selected demographic (Altair)
     with col_scatter:

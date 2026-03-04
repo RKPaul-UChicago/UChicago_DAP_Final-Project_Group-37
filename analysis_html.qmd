@@ -61,6 +61,7 @@ import warnings
 import tempfile
 from IPython.display import Image
 import vl_convert as vlc
+import json
 
 warnings.filterwarnings("ignore")
 alt.renderers.enable("png")
@@ -1297,47 +1298,62 @@ for col, lbl in demo_labels.items():
 
 ```{python}
 #| label: fig-choropleth
-#| fig-cap: "Spatial patterns: turnout, income, and racial composition for 2024"
+#| fig-cap: "Precinct-level voter turnout rate across all five election years (2008–2024)"
+#| 
 
-prec_2024_geo = load_precinct_gdf(2024)
-map_data = prec_2024_geo.merge(
-    master[master["election_year"] == 2024][[
-        "precinct_id", "turnout_rate",
-        "median_hh_income", "pct_black", "pct_college"
-    ]],
-    on="precinct_id", how="left"
-)
-
-# Convert to WGS 84 for Altair geoshape
-map_data_geo = map_data.to_crs(CRS_GEO)
-
-def make_choropleth(gdf, col, title, scheme):
-    """Build an Altair geoshape choropleth for one variable."""
+def make_turnout_choropleth(gdf, year):
+    # Convert GeoDataFrame to GeoJSON dict — Altair renders this reliably
+    geojson_data = json.loads(gdf.to_json())
+    
     return (
-        alt.Chart(gdf)
-        .mark_geoshape(stroke="white", strokeWidth=0.1)
+        alt.Chart(
+            alt.Data(values=geojson_data['features'])
+        )
+        .mark_geoshape(stroke='white', strokeWidth=0.1)
         .encode(
-            color=alt.Color(f"{col}:Q",
-                            scale=alt.Scale(scheme=scheme),
-                            title=title),
+            color=alt.Color(
+                'properties.turnout_rate:Q',
+                scale=alt.Scale(scheme='redyellowgreen', domain=[0.2, 0.9]),
+                title='Turnout Rate'
+            ),
             tooltip=[
-                alt.Tooltip("precinct_id:N", title="Precinct"),
-                alt.Tooltip(f"{col}:Q", format=".3f", title=title),
+                alt.Tooltip('properties.precinct_id:N', title='Precinct'),
+                alt.Tooltip('properties.turnout_rate:Q', format='.3f', title='Turnout Rate'),
             ],
         )
-        .properties(width=250, height=350, title=f"2024: {title}")
+        .project(type='identity', reflectY=True)
+        .properties(width=180, height=280, title=str(year))
     )
 
-c1 = make_choropleth(map_data_geo, "turnout_rate",      "Turnout Rate",    "redyellowgreen")
-c2 = make_choropleth(map_data_geo, "median_hh_income",  "Median HH Income","yelloworangered")
-c3 = make_choropleth(map_data_geo, "pct_black",         "% Black",         "blues")
-c4 = make_choropleth(map_data_geo, "pct_college",       "% College",       "purples")
+    # Stroke-only layer to highlight precinct borders
+    borders = base.mark_geoshape(
+        fillOpacity=0.0,
+        stroke='black',       # or a dark grey like '#333333'
+        strokeWidth=0.7
+    )
+
+    return (fill + borders).properties(
+        width=180, height=280, title=str(year)
+    )
+
+
+charts = []
+for year in [2008, 2012, 2016, 2020, 2024]:
+    precgeo = load_precinct_gdf(year)
+    mapdata = precgeo.merge(
+        master[master['election_year'] == year][['precinct_id', 'turnout_rate']],
+        on='precinct_id', how='left'
+    )
+    mapdatageo = mapdata.to_crs('EPSG:4326')
+    charts.append(make_turnout_choropleth(mapdatageo, year))
 
 choropleth_chart = (
-    alt.hconcat(c1, c2, c3, c4)
-    .properties(title="Chicago 2024 Election — Spatial Patterns by Precinct")
+    alt.hconcat(*charts)
+    .resolve_scale(color='shared')
+    .properties(title='Chicago Precinct-Level Voter Turnout Rate (2008–2024)')
 )
 display_altair_png(choropleth_chart, scale=3)
+
 ```
 
 ---
