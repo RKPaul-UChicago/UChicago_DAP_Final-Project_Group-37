@@ -39,7 +39,7 @@ PRECINCT_FILES = {
     2024: "Precincts(2023-) (2024 elections).geojson",
 }
 
-# Radio-button label → master_panel column
+# Radio-button label to master_panel column
 DEMO_OPTIONS = {
     "SES": "ses_pca_0_100",
     "Median Income": "median_hh_income",
@@ -72,7 +72,7 @@ def spearman_corr(x, y):
 
 
 def turnout_to_color(rate):
-    """Map turnout 0-1 → RGB list: red → yellow → green."""
+    """Map turnout 0-1 to RGB list: red to yellow to green."""
     if rate is None or pd.isna(rate):
         return [180, 180, 180, 100]
     r = float(rate)
@@ -148,14 +148,14 @@ def load_precinct_gdf(year):
 
 
 #  Sidebar navigation 
-page = st.sidebar.radio("Navigation", ["Welcome", "Dashboard"], index=0)
+page = st.sidebar.radio("Navigation", ["Overview", "Dashboard"], index=0)
 st.sidebar.markdown("---")
 st.sidebar.caption(
     "Group 37 - Rajat Kanti Paul & Sakkhi Raheel\n\n"
     "PPHA 30538 - University of Chicago"
 )
-#                             WELCOME  PAGE
-if page == "Welcome":
+#  WELCOME  PAGE
+if page == "Overview":
     st.title("Chicago Voter Turnout & Demographic Analysis")
     st.subheader("Presidential Elections - 2008 to 2024")
     st.markdown("---")
@@ -184,10 +184,8 @@ enabling direct comparison with turnout data.
     )
 
     st.markdown("### Summary of Key Findings")
-    col_a, col_b = st.columns(2)
 
-    with col_a:
-        st.markdown(
+    st.markdown(
             """
 **Income & Education**
 The strongest and most consistent positive correlations with turnout.
@@ -196,25 +194,21 @@ materially higher rates than those in the lowest quintile – a gap that
 persists across all five elections but narrows in high-enthusiasm years
 (2008, 2020).
 
+**Youth Share**
+Precincts with more residents aged 18–29 tend to show lower turnout,
+consistent with national patterns of lower youth participation.
+
 **Renter Share**
 Consistently negatively correlated with turnout. Residential mobility
 disrupts registration and weakens the community ties that facilitate
 political participation.
-"""
-        )
 
-    with col_b:
-        st.markdown(
-            """
 **Racial Composition**
 In 2008 (Obama's first run), majority-Black precincts showed elevated
 turnout relative to other years – consistent with candidate-driven
 mobilization. In other cycles, higher minority share generally correlates
 with lower turnout, reflecting structural barriers.
 
-**Youth Share**
-Precincts with more residents aged 18–29 tend to show lower turnout,
-consistent with national patterns of lower youth participation.
 """
         )
 
@@ -242,12 +236,8 @@ consistent with national patterns of lower youth participation.
         """
 ### Policy Implications
 
-> Structural barriers – time off work, transportation, registration
-> complexity – disproportionately affect lower-income residents.
-> Targeted interventions include **expanded early voting**,
-> **automatic voter registration**, **same-day registration**, and
-> **community-based civic engagement programs** in minority-majority
-> precincts.
+Structural barriers – time off work, transportation, registration complexity – disproportionately affect lower-income residents. Targeted interventions include **expanded early voting**, **automatic voter registration**, **same-day registration**, and
+ **community-based civic engagement programs** in minority-majority precincts.
 
 *Navigate to the **Dashboard** page using the sidebar to explore the
 data interactively.*
@@ -264,13 +254,9 @@ else:
     master = load_master()
 
     # 1. Summary Statistics Table
-    st.subheader("Summary Statistics by Election Year")
+    st.subheader("Demographic Statistics by Election Year")
 
     summary = master.groupby("election_year").agg(
-        n_precincts=("precinct_id", "count"),
-        avg_turnout=("turnout_rate", "mean"),
-        median_turnout=("turnout_rate", "median"),
-        avg_reg_rate=("registration_rate", lambda x: x.dropna().mean()),
         avg_income_k=("median_hh_income", lambda x: x.dropna().mean() / 1000),
         avg_pct_college=("pct_college", lambda x: x.dropna().mean()),
         avg_pct_black=("pct_black", lambda x: x.dropna().mean()),
@@ -284,14 +270,13 @@ else:
     summary = summary.reset_index(drop=True)
 
     summary.columns = [
-        "Election Year", "N Precincts", "Avg Turnout", "Median Turnout", "Avg Reg Rate",
+        "Election Year",
         "Avg Income ($K)", "Avg % College", "Avg % Black",
         "Avg % Hispanic", "Avg % Renter", "Avg % 18-29",
     ]
 
     disp = summary.copy()
     pct_cols = [
-        "Avg Turnout", "Median Turnout", "Avg Reg Rate",
         "Avg % College", "Avg % Black", "Avg % Hispanic",
         "Avg % Renter", "Avg % 18-29",
     ]
@@ -299,10 +284,10 @@ else:
         disp[c] = (disp[c] * 100).round(1).astype(str) + "%"
 
     disp["Avg Income ($K)"] = "$" + disp["Avg Income ($K)"].round(1).astype(str) + "K"
-    disp["N Precincts"] = disp["N Precincts"].astype(int)
+    disp["Election Year"] = disp["Election Year"].astype(int)
 
     # Fancy styling: colored header boxes, subtle row striping, right alignment
-    header_bg = "#1f77b4"
+    header_bg = "#32BD36"
     header_text = "#ffffff"
 
     styled = (
@@ -346,6 +331,48 @@ else:
         )
 
     year_data = master[master["election_year"] == selected_year].copy()
+
+    # Styled info cards for the selected year
+    n_precincts = len(year_data)
+    avg_turnout = year_data["turnout_rate"].mean() * 100
+    avg_reg = year_data["registration_rate"].dropna().mean() * 100
+
+    def info_card(color, label, value, subtitle):
+        return f"""
+        <div style="background:#f9f9f9; border-radius:6px; padding:16px 20px;
+                    border-top:4px solid {color}; text-align:center;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-size:13px; color:#666; margin-bottom:6px;">{label}</div>
+            <div style="font-size:28px; font-weight:700; color:#333;">{value}</div>
+            <div style="font-size:11px; color:#999; margin-top:4px;">{subtitle}</div>
+        </div>
+        """
+    
+    m1, m2, m3 = st.columns(3)
+    with m1:
+        st.markdown(
+            info_card("#E87722", "Number of Precincts",
+                      f"{n_precincts:,}",
+                      f"Chicago {selected_year} Election"),
+            unsafe_allow_html=True,
+        )
+    with m2:
+        st.markdown(
+            info_card("#32BD36", "Voter Registration Rate",
+                      f"{avg_reg:.1f}%",
+                      "Registered Voters / Voting Age Population"),
+            unsafe_allow_html=True,
+        )
+
+    with m3:
+        st.markdown(
+            info_card("#1565C0", "Average Turnout Rate",
+                      f"{avg_turnout:.1f}%",
+                      "Ballots Cast / Registered Voters"),
+            unsafe_allow_html=True,
+        )
+        
+    st.markdown("<br>", unsafe_allow_html=True)
 
     # 3. Two-column layout: Choropleth | Scatter 
     col_map, col_scatter = st.columns(2)
