@@ -517,7 +517,7 @@ else:
         regression = base.transform_regression(
             x_col, "turnout_pct",
         ).mark_line(
-            color="red", strokeWidth=2.5,
+            color="red", strokeWidth=2.5, clip=True,
         ).encode(
             x=alt.X(f"{x_col}:Q"),
             y=alt.Y("turnout_pct:Q"),
