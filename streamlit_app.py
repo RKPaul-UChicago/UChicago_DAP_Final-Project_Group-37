@@ -235,9 +235,11 @@ with lower turnout, reflecting structural barriers.
     st.markdown(
         """
 ### Policy Implications
-
-Structural barriers – time off work, transportation, registration complexity – disproportionately affect lower-income residents. Targeted interventions include **expanded early voting**, **automatic voter registration**, **same-day registration**, and
- **community-based civic engagement programs** in minority-majority precincts.
+Turnout inequality remains spatially persistent across Chicago neighborhoods, with lower socioeconomic areas consistently showing 
+lower participation rates. These patterns suggest that residents in disadvantaged communities face greater barriers to political 
+participation. Among the demographic factors examined, education emerges as the most consistent predictor of turnout differences. 
+Overall, the findings point to a civic engagement gap driven more by differences in political awareness and institutional familiarity 
+than by purely financial constraints.
 
 *Navigate to the **Dashboard** page using the sidebar to explore the
 data interactively.*
