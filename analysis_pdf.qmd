@@ -35,19 +35,19 @@ Our Final Project Workflow is described below:
    interpolated demographics.
 7. **Part 7 – Master Dataset:** Stack all five election years into one panel
    dataset and save to `data/master_panel.csv`.
-8. **Part 8 – Analysis:** Bar chart, choropleth maps, regression analysis, scatter plots, income quintile plot.
+8. **Part 8 – Analysis:** Choropleth maps, Ccatter plots, Regression model, Heatmap.
 9. **Part 9 – Policy Implications and Recommendations:** Interpret findings and connect to policy.
 
 ---
-## Research Question and Motivation
+**Motivation and Research Question**
 
-Presidential elections in Chicago are characterized by sufficiently high levels of participation, yet voter turnout is far from evenly distributed across the city. Some neighborhoods vote at much higher rates than others, and these differences persist from election to election. These patterns matter because turnout shapes whose preferences are represented in democratic decision-making. If participation varies systematically across neighborhoods, the electorate may not fully reflect the broader population of the city.
+Democratic systems rely on broad participation in elections, yet voter turnout rarely occurs evenly across communities. In cities like Chicago, participation varies widely across neighborhoods with different socioeconomic conditions. These differences matter because turnout ultimately shapes whose preferences are represented in democratic decision-making. When some communities consistently participate at higher rates than others, the electorate may not fully reflect the population as a whole.
 
-This project examines who votes in Chicago and how representative the electorate is across neighborhoods during presidential elections from 2008 to 2024. In particular, we are interested in whether turnout patterns remain stable across time and whether higher-turnout elections reduce participation gaps or simply raise turnout everywhere. Understanding these dynamics is important for evaluating civic engagement in the city and identifying where barriers to participation may still exist.
+This project examines who votes in Chicago and how representative the electorate is across neighborhoods during presidential elections from 2008 through 2024. Specifically, we ask two related questions. First, how does voter turnout vary spatially across Chicago precincts? Second, how strongly are turnout patterns associated with neighborhood socioeconomic and demographic characteristics?
 
-Chicago provides an especially compelling setting for this analysis. The city contains diverse neighborhoods with large differences in income, education, housing stability, and demographic composition. These characteristics are likely to influence political participation. By studying turnout patterns across precincts and over time, we aim to better understand how neighborhood characteristics relate to voter participation and what these patterns suggest about the representativeness of the electorate.
+Understanding these patterns has practical implications for policymakers, civic organizations, and election administrators. If participation gaps are concentrated in particular types of neighborhoods, targeted policies and civic engagement strategies may help reduce barriers to participation and strengthen democratic representation. By analyzing turnout across five presidential elections that capture varying turnout environments and political contexts, this project provides a long-term perspective on how participation patterns persist across time and how they relate to structural neighborhood characteristics.
 
-Our analysis is descriptive and policy-oriented rather than causal, but it highlights important structural patterns in turnout that may inform civic engagement policies and voter outreach efforts.
+Our goal is not to establish causal relationships but to provide a clear descriptive policy-oriented evidence of turnout inequality across Chicago and explore what these patterns imply for civic engagement and public policy.
 
 ```{python}
 ## Setup
@@ -125,27 +125,22 @@ print("Setup complete.")
 ```
 
 ---
-## Data and Methodology
 
-Data and Methodology
+**Data and Methodology**
 
-To study neighborhood-level voting patterns, we combine several datasets that capture both electoral participation and local demographic characteristics.
+To analyze voting behavior across the city, we combine precinct-level election results with demographic and spatial data from several sources.
 
-First, we use precinct-level voter turnout data from the Chicago Board of Elections, which provide counts of registered voters and ballots cast for presidential elections from 2008 through 2024. These data allow us to measure turnout rates at the precinct level for each election year.
+First, we use voter turnout data from the Chicago Board of Elections, which provide counts of registered voters and ballots cast for each precinct during presidential elections from 2008 to 2024. These data allow us to calculate turnout rates for thousands of precinct observations across five election cycles.
 
-Second, we incorporate demographic and socioeconomic data from the American Community Survey (ACS). We use ACS 5-year estimates aligned to each election year in order to approximate neighborhood conditions during that period. The demographic variables we focus on include median household income, educational attainment, renter share, racial composition, and the share of young residents.
+Second, we incorporate neighborhood demographic characteristics from the American Community Survey (ACS). We use ACS 5-year estimates aligned to each election cycle to approximate neighborhood conditions during that period. The demographic variables we focus on include median household income, college education, renter share, racial composition, and the share of young residents (age 18–29), all measured at the census tract level. These variables capture important socioeconomic conditions that may influence political participation. To ensure the analysis focuses strictly on the city, ACS census tracts are clipped to the Chicago municipal boundary, removing areas outside city limits.
 
-Finally, we use geographic boundary data from two sources:
-	•	Chicago precinct boundary files from the Chicago Data Portal
-	•	Census tract shapefiles from the U.S. Census TIGER/Line program
+Third, we use geographic boundary files for both census tracts and voting precincts. Precinct boundary files are obtained from the Chicago Data Portal, while census tract shapefiles come from the U.S. Census TIGER/Line program. Because these geographic units do not share identical boundaries, demographic information cannot be merged directly onto precinct-level election data. To address this challenge, we apply area-weighted spatial interpolation, which calculates the geographic overlap between census tracts and precinct polygons and assigns demographic characteristics to precincts proportionally based on their overlapping area.
 
-These spatial datasets allow us to link demographic information to voting precincts.
+The resulting dataset is a precinct-by-year panel, where each observation represents a precinct in a particular election year and includes turnout rates, demographic characteristics, and geographic identifiers.
 
-Because census tracts and voting precincts do not share identical boundaries, demographic data cannot be merged directly onto precinct election results. To address this, we apply area-weighted spatial interpolation. This method calculates the geographic overlap between census tracts and precinct polygons and assigns tract-level demographic characteristics to precincts in proportion to their area overlap. This approach allows us to approximate the demographic composition of each voting precinct while maintaining geographic consistency across election years.
+To summarize neighborhood conditions more clearly, we construct a Socioeconomic Status (SES) index using Principal Component Analysis (PCA). This index combines several demographic characteristics into a single measure capturing overall neighborhood socioeconomic advantage.
 
-The resulting dataset is a precinct-by-year panel, where each observation represents one precinct in one presidential election. The dataset includes turnout rates, registration counts, demographic indicators, and spatial identifiers.
-
-To summarize overall neighborhood conditions, we construct a Socioeconomic Status (SES) index using Principal Component Analysis (PCA). The SES index combines several related variables into a single measure capturing overall socioeconomic advantage. Higher values indicate precincts with higher income, higher educational attainment, and lower housing instability.
+Together, these data allow us to examine how turnout varies spatially across Chicago and how strongly participation is associated with neighborhood characteristics.
 
 ## Part 1 – Data Collection
 
@@ -768,7 +763,7 @@ master_idx["ses_pca_0_100"] = master_idx.groupby("election_year")["ses_pca"].tra
 
 ---
 
-## Analysis Approach and Dashboard
+**Analysis Approach and Dashboard**
 
 Our project combines static visual analysis with an interactive dashboard that allows users to explore turnout patterns in greater detail.
 
@@ -779,11 +774,15 @@ In addition to these figures, our dashboard allows users to interactively explor
 Potential users of the dashboard include students, researchers, civic organizations, and policymakers interested in voter participation patterns. The dashboard is designed to make the underlying data more accessible and to allow users to explore how turnout varies across neighborhoods and election cycles.
 
 
-## Findings
+**Findings**
 
-### Spatial patterns in voter turnout
+**Spatial patterns in voter turnout**
 
-Turnout is not evenly distributed across Chicago. Instead, clear geographic patterns emerge when turnout is mapped at the precinct level. Higher turnout precincts consistently appear in parts of the North Side and along the lakefront, while lower turnout is more common in parts of the South and West sides of the city. These spatial patterns appear in every election year in our dataset. Even during high-turnout presidential elections, the relative ranking of neighborhoods tends to remain similar. This persistence suggests that turnout inequality is not simply driven by a particular election or candidate. Instead, it reflects structural differences across neighborhoods that influence political participation.
+Our first visualization maps turnout rates across Chicago precincts for each presidential election.
+
+The maps reveal clear and persistent spatial patterns in voter participation. Higher-turnout precincts consistently appear in parts of the North Side and lakefront neighborhoods, while lower turnout is more common in parts of the South and West sides of the city. Importantly, these spatial patterns remain visible across all five election years, illustrating that turnout differences are geographically clustered rather than randomly distributed across the city.
+
+Even in high-turnout presidential elections (2008 and 2012), relative differences between neighborhoods remain strikingly stable. This suggests that turnout inequality is not driven solely by specific candidates or campaign mobilization. Instead, it reflects deeper structural differences across neighborhoods.
 
 ## Part 8 – Visualizations
 
@@ -853,9 +852,13 @@ display_altair_png(choropleth_chart, scale=3)
 ```
 
 ---
-### Socioeconomic status and turnout
 
-A strong relationship emerges between socioeconomic conditions and voter participation. Across every election year, precincts with higher values on the socioeconomic status index consistently exhibit higher turnout rates. Conversely, precincts with lower SES scores tend to show lower participation. This pattern appears remarkably stable across the entire 2008–2024 period. These results suggest that socioeconomic advantage is strongly associated with civic participation. Factors such as educational attainment, income stability, and youth share likely shape both the resources and the institutional familiarity that make participation easier.
+**Socioeconomic status (SES) and turnout**
+
+To explore whether neighborhood socioeconomic conditions are associated with voter participation, we examine the relationship between turnout and the SES index across election years The scatter plots show a clear and consistent positive relationship between socioeconomic status and turnout. Precincts with higher SES scores tend to exhibit higher turnout rates, while precincts with lower SES scores generally show lower participation.
+
+This relationship appears in every election cycle in our dataset. While turnout increases during highly competitive elections, the relative gap between high-SES and low-SES precincts remains visible.These results suggest that socioeconomic conditions are strongly associated with participation. Neighborhood characteristics such as income levels, educational attainment, and housing stability likely shape both the resources and institutional familiarity that facilitate political engagement.
+
 
 ### 8.2 Scatter plot-Turnout vs Socioeconomic index by year
 
@@ -913,9 +916,11 @@ display_altair_png(chart_ses, scale=3)
 ```
 
 ---
-### Fixed effects effects
 
-To quantify the relationship between neighborhood socioeconomic conditions and turnout, we estimate a two-way fixed effects panel model that controls for both precinct-specific and election-year effects. The results indicate a positive and statistically significant relationship between the SES index and turnout. Interpreting the coefficient in substantive terms, the results suggest that if a precinct becomes one standard deviation more socioeconomically advantaged, turnout increases by roughly 3.3 percentage points. The finding reinforces the descriptive patterns observed in the visualizations.
+**Fixed Effects Regression Model**
+
+To quantify this relationship more formally, we estimate a two-way fixed effects panel regression that controls for both precinct-level and election-year differences. The regression results indicate a positive and statistically significant relationship between socioeconomic status and turnout. Substantively, the estimates suggest that if a precinct becomes one standard deviation more socioeconomically advantaged, turnout increases by approximately 3.3 percentage points. Tne results reinforce the descriptive patterns observed in the visualizations.
+
 
 ### 8.3 Two-way Fixed Effects Panel Regression
 ```{python}
@@ -955,9 +960,15 @@ print(results.summary.tables[1])
 ```
 
 ---
-### Demographic correlations over time
 
-Examining correlations between turnout and demographic variables reveals additional insights about participation patterns. Education and income show the strongest and most consistent positive relationships with turnout across election years. Precincts with higher shares of college-educated residents and higher household income levels consistently exhibit higher voter participation. In contrast, precincts with larger shares of young residents or renters tend to exhibit lower turnout. These patterns are consistent with broader national trends in political participation.Despite fluctuations across elections, the overall structure of turnout differences remains remarkably consistent across time.
+**Demographic patterns in turnout**
+
+Finally, we examine how turnout correlates with several demographic characteristics across election cycles. The heatmap visualization summarizes correlations between turnout and demographic variables for each election year.
+
+Several patterns emerge clearly. Income and education show the strongest and most consistent positive relationships with turnout across election cycles. Precincts with higher household incomes and higher shares of college-educated residents consistently exhibit higher participation. By contrast, precincts with higher shares of renters or younger residents tend to show lower turnout rates. These patterns are consistent with broader national trends in political participation. One notable exception occurs in 2008, when majority-Black precincts experienced relatively higher turnout compared to other years. This pattern likely reflects the unique mobilization dynamics surrounding Barack Obama’s first presidential campaign.
+
+Overall, the heatmap confirms that turnout differences across Chicago are strongly associated with structural neighborhood characteristics.
+
 
 ### 8.4 Heatmap: Demographics vs Turnout Rate
 
@@ -1007,7 +1018,7 @@ corr_long = corr_df.reset_index().melt(
 
 chart_heatmap = (
     alt.Chart(corr_long)
-    .mark_rect()
+    .mark_rect(stroke="white", strokeWidth=1)
     .encode(
         x=alt.X(
             "Variable:N",
@@ -1047,32 +1058,45 @@ display_altair_png(chart_corr)
 ```
 
 ---
+**Policy Implications and Recommendations**
 
-## Limitations
+These findings highlight persistent inequalities in political participation across Chicago neighborhoods. Lower-socioeconomic areas consistently exhibit lower turnout, suggesting that barriers to participation remain concentrated in particular parts of the city.
 
-The analysis identifies associations rather than causal effects. While socioeconomic characteristics are strongly correlated with turnout, the analysis does not establish that these variables directly cause differences in participation.
+Education emerges as the most consistent predictor of turnout differences. This suggests that turnout gaps may reflect differences in civic knowledge, access to political information, and familiarity with voting institutions rather than purely financial constraints.
 
-Secondly, the demographic characteristics of precincts are estimated using area-weighted spatial interpolation from census tracts. Although this is a standard approach when geographic units do not align perfectly, it introduces some measurement uncertainty into the demographic estimates.
+These patterns have several policy implications
 
-Finally, voter turnout is influenced by many factors not captured in this dataset, including campaign mobilization efforts, candidate characteristics, and historical voting behavior.
+civic engagement efforts could be more effectively targeted toward lower-SES precincts where participation gaps are largest. Community-based outreach programs, voter information campaigns, and neighborhood organizing initiatives may help reduce informational barriers and encourage participation. Besides, civic education initiatives, particularly those focused on younger voters, may help address the lower turnout observed in precincts with higher shares of young residents. Programs that improve understanding of the voting process and emphasize the importance of participation may strengthen long-term engagement.
 
-## Policy Implications and Recommendations
+Importantly, these policies are not solely the responsibility of government agencies. Civic organizations, campaigns, and community groups also play critical roles in mobilizing participation in targetted areaa.
+ 
+---
 
-The results highlight persistent inequalities in political participation across Chicago neighborhoods. Lower-socioeconomic areas consistently exhibit lower turnout, suggesting that structural barriers to participation remain an important issue.
+**Interactive Dashboard and Policy Use**
 
-Education appears to be the most consistent predictor of turnout differences. This suggests that turnout inequality may reflect differences in civic knowledge, access to political information, and familiarity with voting institutions rather than purely financial constraints.
+In addition to the static analysis presented in this report, we developed an interactive dashboard that allows users to explore Chicago’s voter turnout patterns across precincts and election years. The dashboard enables users to visualize spatial variation in turnout, examine relationships between turnout and neighborhood demographics, and compare patterns across communities.
 
-These findings point toward several potential policy directions.
+This tool can support election administrators, local governments, and civic organizations in identifying neighborhoods where voter engagement initiatives may have the greatest impact. It can also help campaign strategists and mobilization groups locate areas where turnout potential appears underutilized and where targeted outreach may be most effective.
 
-Community-based voter outreach efforts may help increase participation in lower-SES precincts by improving access to information and reducing logistical barriers to voting. Civic education programs that explain voting processes and emphasize the importance of participation may also play an important role, particularly for younger residents.
+By presenting these patterns in an interactive format, the dashboard translates complex data into practical insights that can inform more targeted policy interventions.
 
-Institutional reforms that reduce participation barriers—such as early voting opportunities and same-day voter registration—may further help expand access to the electoral process.
+---
 
-Ultimately, improving the representativeness of the electorate requires reducing structural gaps in civic engagement across neighborhoods. By identifying where turnout gaps are most persistent, this analysis provides a foundation for more targeted efforts to strengthen democratic participation across Chicago.
+**Limitations**
 
-*All spatial operations use UTM Zone 16N (EPSG:26916) for accurate area
-calculations. ACS 5-year estimates are aligned to 2020 census tract
-definitions. Illinois State FIPS: 17; Cook County FIPS: 031.*
+Several limitations should be considered when interpreting these results.
+
+- First, the analysis identifies associations rather than causal relationships. Turnout is influenced by many factors not captured in this dataset, including campaign mobilization, candidate characteristics, and historical voting behavior.
+
+- Second, demographic characteristics are estimated using area-weighted interpolation from census tracts, which introduces some measurement uncertainty when geographic boundaries do not align perfectly.
+
+- Finally, voter participation is shaped by complex social and institutional factors that extend beyond the scope of this analysis.
+
+---
+
+**Conclusion**
+
+Despite these limitations, the analysis provides a clear picture of persistent turnout inequality across Chicago. By combining spatial analysis, statistical modeling, and interactive visualization, this project provides a foundation for understanding who votes in Chicago—and where efforts to strengthen civic participation may be most needed.
 
 
 
