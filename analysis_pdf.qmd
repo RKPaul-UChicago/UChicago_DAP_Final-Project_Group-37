@@ -49,8 +49,6 @@ Understanding these patterns has practical implications for policymakers, civic 
 
 Our goal is not to establish causal relationships but to provide a clear descriptive policy-oriented evidence of turnout inequality across Chicago and explore what these patterns imply for civic engagement and public policy.
 
-```{python}
-## Setup
 
 ```{python}
 #| label: setup
