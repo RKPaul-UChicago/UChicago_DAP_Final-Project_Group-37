@@ -150,16 +150,16 @@ def load_precinct_gdf(year):
 
 #  Sidebar navigation 
 # Navigation
-page = st.sidebar.radio("Navigation", ["Overview", "Dashboard"], index=0)
+page = st.sidebar.radio("#### **Navigation**", ["Overview", "Dashboard"], index=0)
 
 # Divider
 st.sidebar.markdown("---")
 
 # How to use the dashboard
-st.sidebar.markdown("### **How to Use**")
+st.sidebar.markdown("#### **How to Use**")
 st.sidebar.write(
 """
-Use the **Dashboard** page to explore how voter turnout varies across 
+Use the Dashboard page to explore how voter turnout varies across 
 Chicago precincts and demographic characteristics.
 
 *Navigate between pages using the menu above.*
@@ -167,7 +167,7 @@ Chicago precincts and demographic characteristics.
 )
 
 # Dataset information
-st.sidebar.markdown("### **Dataset**")
+st.sidebar.markdown("#### **Dataset**")
 st.sidebar.write("Elections analyzed: 2008–2024")
 st.sidebar.write("Geography: Chicago precincts")
 
@@ -175,11 +175,11 @@ st.sidebar.write("Geography: Chicago precincts")
 st.sidebar.markdown("---")
 
 # Project information
-st.sidebar.markdown("### **Project Team**")
+st.sidebar.markdown("#### **Project Team**")
 st.sidebar.write("Rajat Kanti Paul")
 st.sidebar.write("Sakkhi Raheel")
 
-st.sidebar.markdown("### **Course**")
+st.sidebar.markdown("#### **Course**")
 st.sidebar.write("PPHA 30538 – Data Analytics & Visualization for Public Policy")
 
 st.sidebar.markdown("Harris School of Public Policy, University of Chicago")
