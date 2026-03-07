@@ -918,9 +918,6 @@ display_altair_png(chart_ses, scale=3)
 To quantify the relationship between neighborhood socioeconomic conditions and turnout, we estimate a two-way fixed effects panel model that controls for both precinct-specific and election-year effects. The results indicate a positive and statistically significant relationship between the SES index and turnout. Interpreting the coefficient in substantive terms, the results suggest that if a precinct becomes one standard deviation more socioeconomically advantaged, turnout increases by roughly 3.3 percentage points. The finding reinforces the descriptive patterns observed in the visualizations.
 
 ### 8.3 Two-way Fixed Effects Panel Regression
-
-When the SES of a given precinct improves relative to its own history, does turnout increase?
-If a precinct becomes 1 SD more advantaged, turnout increases by ~3.3 percentage points. That is a large effect in voting behavior.
 ```{python}
 #| label: OLS Panel Regression
 #| code-summary:"Two-way fixed effects panel regression model"
@@ -962,88 +959,91 @@ print(results.summary.tables[1])
 
 Examining correlations between turnout and demographic variables reveals additional insights about participation patterns. Education and income show the strongest and most consistent positive relationships with turnout across election years. Precincts with higher shares of college-educated residents and higher household income levels consistently exhibit higher voter participation. In contrast, precincts with larger shares of young residents or renters tend to exhibit lower turnout. These patterns are consistent with broader national trends in political participation.Despite fluctuations across elections, the overall structure of turnout differences remains remarkably consistent across time.
 
-### 8.4 Correlation Trends against Demographhics Over Time
+### 8.4 Heatmap: Demographics vs Turnout Rate
 
 ```{python}
-#| label: fig-corr-trends
-#| fig-cap: "How turnout–demographic correlations change across election years"
+#| label: fig-corr-heatmap
+#| fig-cap: "Spearman correlations between precinct turnout rate and demographic variables by year"
+
+def spearman_corr(x, y):
+    """Compute Spearman rank correlation using pandas rank method."""
+    valid = pd.DataFrame({"x": x, "y": y}).dropna()
+    if len(valid) < 10:
+        return np.nan
+    return valid["x"].rank().corr(valid["y"].rank())
+
+demo_labels = {
+    "median_hh_income": "HH Income",
+    "pct_college":      "% College",
+    "pct_black":        "% Black",
+    "pct_hispanic":     "% Hispanic",
+    "pct_renter":       "% Renter",
+    "pct_18_29":        "% Age 18–29",
+}
 
 corr_rows = []
-
 for year in ELECTION_YEARS:
     sub = master[master["election_year"] == year].copy()
     row = {"Year": year}
-
     for col in DEMO_COLS:
         valid = sub[["turnout_rate", col]].dropna()
-
         if len(valid) >= 30:
-            r = valid["turnout_rate"].corr(valid[col], method="spearman")
+            r = spearman_corr(valid["turnout_rate"], valid[col])
             row[col] = round(r, 3)
         else:
             row[col] = np.nan
-
     corr_rows.append(row)
 
 corr_df = (
     pd.DataFrame(corr_rows)
-    .set_index("Year")
+      .set_index("Year")
+      .rename(columns=demo_labels)
 )
 
+# Reshape to long form for Altair
 corr_long = corr_df.reset_index().melt(
-    id_vars="Year",
-    var_name="Variable",
-    value_name="Spearman_r"
+    id_vars="Year", var_name="Variable", value_name="Spearman_r"
 )
 
-# Selection for hover highlight
-highlight = alt.selection_point(
-    on="pointerover",
-    fields=["Variable"],
-    nearest=True
-)
-
-chart_trends = (
+chart_heatmap = (
     alt.Chart(corr_long)
-    .mark_line(point=True, strokeWidth=2.5)
+    .mark_rect()
     .encode(
-        x=alt.X("Year:O", title="Election Year"),
+        x=alt.X(
+            "Variable:N",
+            title="Demographics",
+            sort=list(demo_labels.values())
+        ),
         y=alt.Y(
-            "Spearman_r:Q",
-            title="Spearman r",
-            scale=alt.Scale(domain=[-0.65, 1.0])
+            "Year:O",
+            title="Election Year"
         ),
         color=alt.Color(
-            "Variable:N",
-            title="Demographic",
-            scale=alt.Scale(scheme="tableau10")
+            "Spearman_r:Q",
+            scale=alt.Scale(
+                scheme="redyellowgreen",   
+                domain=[-0.75, 0.75]
+            ),
+            title="Spearman r"
         ),
-        opacity=alt.condition(highlight, alt.value(1), alt.value(0.3)),
         tooltip=[
             alt.Tooltip("Year:O"),
             alt.Tooltip("Variable:N"),
             alt.Tooltip("Spearman_r:Q", format=".3f"),
         ],
     )
-    .add_params(highlight)
 )
 
-rule_zero = (
-    alt.Chart(pd.DataFrame({"y": [0]}))
-    .mark_rule(strokeDash=[5, 5], color="black", opacity=0.5)
-    .encode(y="y:Q")
-)
-
-chart_trends_final = (
-    (chart_trends + rule_zero)
+chart_corr = (
+    chart_heatmap
     .properties(
-        width=550,
-        height=350,
-        title="Correlation of Precinct Turnout with Demographic Variables Over Time"
+        width=500,
+        height=220,
+        title="Spearman Correlation: Precinct Turnout Rate vs Demographic Variables"
     )
 )
 
-display_altair_png(chart_trends_final, scale=3)
+display_altair_png(chart_corr)
 ```
 
 ---
