@@ -35,7 +35,7 @@ Our Final Project Workflow is described below:
    interpolated demographics.
 7. **Part 7 – Master Dataset:** Stack all five election years into one panel
    dataset and save to `data/master_panel.csv`.
-8. **Part 8 – Analysis:** Choropleth maps, Ccatter plots, Regression model, Heatmap.
+8. **Part 8 – Analysis:** Choropleth maps, Scatter plots, Regression analysis, Heatmap.
 9. **Part 9 – Policy Implications and Recommendations:** Interpret findings and connect to policy.
 
 ---
