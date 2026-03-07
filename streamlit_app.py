@@ -15,6 +15,7 @@ from pathlib import Path
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
+
 #  Page configuration 
 st.set_page_config(
     page_title="Chicago Voter Turnout Dashboard",
@@ -155,7 +156,7 @@ page = st.sidebar.radio("Navigation", ["Overview", "Dashboard"], index=0)
 st.sidebar.markdown("---")
 
 # How to use the dashboard
-st.sidebar.markdown("### How to Use")
+st.sidebar.markdown("### **How to Use**")
 st.sidebar.write(
 """
 Use the **Dashboard** page to explore how voter turnout varies across 
@@ -166,7 +167,7 @@ Chicago precincts and demographic characteristics.
 )
 
 # Dataset information
-st.sidebar.markdown("### Dataset")
+st.sidebar.markdown("### **Dataset**")
 st.sidebar.write("Elections analyzed: 2008–2024")
 st.sidebar.write("Geography: Chicago precincts")
 
@@ -174,14 +175,42 @@ st.sidebar.write("Geography: Chicago precincts")
 st.sidebar.markdown("---")
 
 # Project information
-st.sidebar.markdown("### Project Team")
+st.sidebar.markdown("### **Project Team**")
 st.sidebar.write("Rajat Kanti Paul")
 st.sidebar.write("Sakkhi Raheel")
 
-st.sidebar.markdown("### Course")
+st.sidebar.markdown("### **Course**")
 st.sidebar.write("PPHA 30538 – Data Analytics & Visualization for Public Policy")
 
 st.sidebar.markdown("Harris School of Public Policy, University of Chicago")
+
+st.markdown("""
+<style>
+/* Sidebar background */
+[data-testid="stSidebar"] {
+    background-color: #00897B;
+}
+
+/* All sidebar text */
+[data-testid="stSidebar"] * {
+    color: white !important;
+}
+
+/* Markdown headings */
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    color: white !important;
+}
+
+/* Divider line */
+[data-testid="stSidebar"] hr {
+    border-color: rgba(255,255,255,0.3);
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 #  WELCOME  PAGE
 if page == "Overview":
     st.title("Chicago Voter Turnout & Demographic Analysis")
@@ -274,7 +303,6 @@ important for improving participation.
 """
     )
 
-
 #                            DASHBOARD  PAGE
 
 else:
@@ -319,43 +347,57 @@ else:
     disp["Avg Income ($K)"] = "$" + disp["Avg Income ($K)"].round(1).astype(str) + "K"
     disp["Election Year"] = disp["Election Year"].astype(int)
 
-    header_bg = "#32BD36"
+    header_bg = "#00897B"
     header_text = "#ffffff"
-
     styled = (
-        disp.style
-        .hide(axis="index")
-        .set_table_styles([
-            {
-                "selector": "table",
-                "props": [
-                    ("margin", "0 auto"),
-                    ("border-collapse", "collapse"),
-                    ("width", "auto"),
-                ],
-            },
-            {
-                "selector": "th",
-                "props": [
-                    ("background-color", header_bg),
-                    ("color", header_text),
-                    ("font-weight", "600"),
-                    ("padding", "8px 12px"),
-                    ("text-align", "center"),
-                ],
-            },
-            {
-                "selector": "td",
-                "props": [
-                    ("padding", "8px 12px"),
-                    ("text-align", "left"),
-                ],
-            },
-        ])
-    )
+    disp.style
+    .hide(axis="index")
+    .set_table_styles([
+        {
+            "selector": "table",
+            "props": [
+                ("margin", "0 auto"),
+                ("border-collapse", "collapse"),
+                ("width", "100%"),
+            ],
+        },
+        {
+            "selector": "th",
+            "props": [
+                ("background-color", header_bg),
+                ("color", header_text),
+                ("font-weight", "600"),
+                ("padding", "10px 16px"),
+                ("text-align", "center"),
+                ("white-space", "nowrap"),
+            ],
+        },
+        {
+            "selector": "td",
+            "props": [
+                ("padding", "10px 16px"),
+                ("text-align", "center"),
+                ("white-space", "nowrap"),
+            ],
+        },
+        {
+            "selector": "tbody tr:nth-child(even)",
+            "props": [
+                ("background-color", "#f7f9f9"),
+            ],
+        },
+        {
+            "selector": "tbody tr:hover",
+            "props": [
+                ("background-color", "#e0f2f1"),
+            ],
+        },
+    ])
+)
+
     table_html = styled.to_html(index=False)
 
-    left, center, right = st.columns([1, 8, 1])
+    left, center, right = st.columns([0.5, 8, 1.5])
     with center:
         st.markdown(table_html, unsafe_allow_html=True)
 
@@ -518,7 +560,7 @@ else:
         demo_choice = st.radio(
             "Select Demographic Variable",
             list(DEMO_OPTIONS.keys()),
-            index=2,
+            index=0,
             horizontal=True,
         )
 
