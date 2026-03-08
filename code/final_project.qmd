@@ -3,8 +3,8 @@ title: |
   Who Votes in Chicago?\
   Participation and Representativeness in Presidential Elections, 2008-2024
 author:
-  - Rajat Kanti Paul (Section 4, Tue-Thu 11:00 AM - 12:20 AM, RKPaul-UChicago)
-  - Sakkhi Raheel (Section 1, Mon-Wed 9:00 AM - 10:20 AM, Sakkhi28)
+  - Rajat Kanti Paul (Section 4, RKPaul-UChicago)
+  - Sakkhi Raheel (Section 1, Sakkhi28)
 date: "March 09, 2026"
 format:
   pdf:
