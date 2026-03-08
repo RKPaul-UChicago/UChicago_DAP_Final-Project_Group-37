@@ -1,5 +1,5 @@
 # Final_Project_Group_37
-Our project Title is: "Who Votes in Chicago? Participation and Representativeness in National Elections, 2008–2024"
+Our project Title is: "Who Votes in Chicago? Participation and Representativeness in Presidential Elections, 2008–2024"
 
 # Streamlit App URL:
 https://final-project-chicago-voter-turnout.streamlit.app
