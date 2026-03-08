@@ -1,0 +1,1143 @@
+---
+title: |
+  Who Votes in Chicago?\
+  Participation and Representativeness in Presidential Elections, 2008-2024
+author:
+  - Rajat Kanti Paul (Section 4, RKPaul-UChicago)
+  - Sakkhi Raheel (Section 1, Sakkhi28)
+date: "March 09, 2026"
+format:
+  pdf:
+    toc: false
+    number-sections: false
+    keep-tex: false
+execute:
+  warning: false
+  message: false
+  echo: false
+fontsize: 11pt
+geometry: margin=1in
+---
+
+<!-- 
+## Overview
+
+Our Final Project Workflow is described below:
+
+1. **Parts 1–3:** ACS 5-year data download, post-processing,
+   and voter turnout file cleaning
+2. **Part 2 – Geographic Foundation:** Load Chicago city boundary and 2020
+   census tract shapefile; filter to Chicago tracts.
+3. **Part 3 – ACS to Census Tracts:** Merge ACS demographic data onto the tract
+   shapefile.
+4. **Part 4 – Precinct Geometry:** Load the correct precinct boundary file for
+   each election year and create a standardized precinct ID.
+5. **Part 5 – Spatial Overlay:** Area-weighted interpolation of tract-level
+   demographics onto precinct polygons.
+6. **Part 6 – Merge Turnout + Demographics:** Join precinct turnout to the
+   interpolated demographics.
+7. **Part 7 – Master Dataset:** Stack all five election years into one panel
+   dataset and save to `data/master_panel.csv`.
+8. **Part 8 – Analysis:** Choropleth maps, Scatter plots, Regression analysis, Heatmap.
+9. **Part 9 – Policy Implications and Recommendations:** Interpret findings and connect to policy.
+-->
+
+### Motivation and Research Question
+
+Democratic systems rely on broad participation in elections, yet voter turnout rarely occurs evenly across communities. In cities like Chicago, participation varies widely across neighborhoods with different socioeconomic conditions. These differences matter because turnout ultimately shapes whose preferences are represented in democratic decision-making. When some communities consistently participate at higher rates than others, the electorate may not fully reflect the population as a whole.
+
+This project examines who votes in Chicago and how representative the electorate is across neighborhoods during presidential elections from 2008 through 2024. Specifically, we ask two related questions. First, how does voter turnout vary spatially across Chicago precincts? Second, how strongly are turnout patterns associated with neighborhood socioeconomic and demographic characteristics?
+
+Understanding these patterns has practical implications for policymakers, civic organizations, and election administrators. If participation gaps are concentrated in particular types of neighborhoods, targeted policies may help reduce barriers to participation and strengthen democratic representation. By analyzing turnout across five presidential elections that capture varying political contexts, this project provides a long-term perspective on how participation patterns persist across time and how they relate to structural neighborhood characteristics.
+
+Our goal is not to establish causal relationships but to provide a clear descriptive policy-oriented evidence of turnout inequality across Chicago and explore what these patterns imply for civic engagement and public policy.
+
+
+```{python}
+#| output: false
+#| label: setup
+#| code-summary: "Load libraries and define paths/constants"
+
+import os
+import time
+import requests
+import pandas as pd
+import numpy as np
+import geopandas as gpd
+import altair as alt
+import seaborn as sns
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from linearmodels.panel import PanelOLS
+import statsmodels.api as sm
+from pathlib import Path
+import warnings
+import tempfile
+from IPython.display import Image
+import vl_convert as vlc
+import json
+import xlrd
+
+warnings.filterwarnings("ignore")
+alt.renderers.enable("png")
+alt.data_transformers.disable_max_rows()
+
+
+def display_altair_png(chart, scale=2):
+    png_bytes = vlc.vegalite_to_png(chart.to_dict(), scale=scale)
+    with tempfile.NamedTemporaryFile(suffix=".png") as tmp:
+        tmp.write(png_bytes)
+        tmp.flush()
+        display(Image(filename=tmp.name))
+
+# Paths
+ROOT         = Path("..")
+
+# Raw data paths (input files)
+RAW_DATA     = ROOT / "data" / "raw-data"
+DATA_ACS_RAW = RAW_DATA / "Data - Raw ACS (demographic variables _ income, education, race, renters, age)"
+DATA_VOTER_RAW = RAW_DATA / "Data - Voter turnout and registration(chicagoelections.gov)"
+PRECINCT_DIR = RAW_DATA / "Chicago precincts shapefiles"
+TRACT_SHP    = RAW_DATA / "Census Tract Shapefile (ACS Merging)" / "tl_2020_17_tract.shp"
+CITY_BNDRY   = RAW_DATA / "Boundaries_-_City_20260206.geojson"
+
+# Derived data paths (output files)
+DERIVED_DATA       = ROOT / "data" / "derived-data"
+ACS_CLEAN_DIR      = DERIVED_DATA / "ACS Clean Data"
+VOTER_CLEAN_DIR    = DERIVED_DATA / "voter-turnout-and-registration-data"
+
+# Coordinate Reference Systems 
+# UTM Zone 16N (EPSG:26916) — metre-based, area-accurate for Chicago
+CRS_PROJ = "EPSG:26916"
+CRS_GEO  = "EPSG:4326"
+
+# Election-year to boundary/ACS file mapping 
+PRECINCT_FILES = {
+    2008: "Precincts (-2010)(2008 and 2012 elections).geojson",
+    2012: "Precincts (-2010)(2008 and 2012 elections).geojson",
+    2016: "Precincts(2013-2022) (2016 and 2020 elections).geojson",
+    2020: "Precincts(2013-2022) (2016 and 2020 elections).geojson",
+    2024: "Precincts(2023-) (2024 elections).geojson",
+}
+
+ACS_FILES = {
+    2008: "acs_2010_for_election_2008.csv",
+    2012: "acs_2014_for_election_2012.csv",
+    2016: "acs_2018_for_election_2016.csv",
+    2020: "acs_2020_for_election_2020.csv",
+    2024: "acs_2024_for_election_2024.csv",
+}
+
+DEMO_COLS      = ["median_hh_income", "pct_college", "pct_black",
+                  "pct_hispanic", "pct_renter", "pct_18_29"]
+ELECTION_YEARS = [2008, 2012, 2016, 2020, 2024]
+
+# Create raw-data folder structure
+import shutil
+
+raw_folders = [
+    "data/raw-data/Census Tract Shapefile (ACS Merging)",
+    "data/raw-data/Chicago precincts shapefiles",
+    "data/raw-data/Data - Raw ACS (demographic variables _ income, education, race, renters, age)",
+    "data/raw-data/Data - Voter turnout and registration(chicagoelections.gov)",
+]
+for folder in raw_folders:
+    os.makedirs(folder, exist_ok=True)
+
+# Create derived-data folders
+os.makedirs("data/derived-data/ACS Clean Data", exist_ok=True)
+os.makedirs("data/derived-data/voter-turnout-and-registration-data", exist_ok=True)
+
+voter_dir = DATA_VOTER_RAW
+for f in os.listdir(voter_dir):
+    if f.endswith(".xls"):
+        src = voter_dir / f
+        dst = voter_dir / (os.path.splitext(f)[0] + ".csv")
+        if not dst.exists():
+            wb = xlrd.open_workbook(str(src), ignore_workbook_corruption=True)
+            df = pd.read_excel(wb, dtype=str)
+            df.to_csv(dst, index=False)
+
+print("Setup complete.")
+```
+
+
+
+**Data and Methodology**
+
+To analyze voting behavior across the city, we combine precinct-level election results with demographic and spatial data from several sources.
+
+First, we use voter turnout data from the Chicago Board of Elections, which provide counts of registered voters and ballots cast for each precinct during presidential elections from 2008 to 2024. These data allow us to calculate turnout rates for thousands of precinct observations across five election cycles.
+
+Second, we incorporate neighborhood demographic characteristics from the American Community Survey (ACS). We use ACS 5-year estimates aligned to each election cycle to approximate neighborhood conditions during that period. The demographic variables we focus on include median household income, college education, renter share, racial composition, and the share of young residents (age 18–29), all measured at the census tract level. These variables capture important socioeconomic conditions that may influence voter participation. To ensure the analysis focuses strictly on the city, ACS census tracts are clipped to the Chicago municipal boundary, removing areas outside city limits.
+
+Third, we use geographic boundary files for both census tracts and voting precincts. Precinct boundary files are obtained from the Chicago Data Portal, while census tract shapefiles come from the U.S. Census TIGER/Line program. Because these geographic units do not share identical boundaries, demographic information cannot be merged directly onto precinct-level election data. To address this challenge, we apply area-weighted spatial interpolation, which calculates the geographic overlap between census tracts and precinct polygons and assigns demographic characteristics to precincts proportionally based on their overlapping area.
+
+The resulting dataset is a **precinct-by-year panel**, where each observation represents a precinct in a particular election year and includes turnout rates, demographic characteristics, and geographic identifiers.
+
+To summarize neighborhood conditions more clearly, we construct a **Socioeconomic Status (SES) index** using Principal Component Analysis (PCA). This index combines several demographic characteristics into a single measure capturing overall neighborhood socioeconomic advantage.
+
+Together, the final master data allow us to examine how turnout varies spatially across Chicago and how strongly participation is associated with neighborhood characteristics.
+
+<!--
+## Part 1 – Data Collection
+
+### 1.1 ACS 5-Year Data Download via Census API
+-->
+
+```{python}
+#| code-fold: true
+#| output: false
+#| code-summary: "ACS API download — downloads raw Census data to data/raw-data/"
+
+# Illinois / Cook County identifiers
+STATE_FIPS  = "17"
+COUNTY_FIPS = "031"
+
+CENSUS_API_KEY = os.getenv("CENSUS_API_KEY", "").strip()
+
+ELECTION_TO_ACS_API_YEAR = {
+    2008: 2010,   # ACS 2006–2010 5-year
+    2012: 2014,   # ACS 2010–2014
+    2016: 2018,   # ACS 2014–2018
+    2020: 2020,   # ACS 2016–2020
+    2024: 2024,   # ACS 2020–2024
+}
+
+OUTDIR = "data/raw-data/Data - Raw ACS (demographic variables _ income, education, race, renters, age)"
+os.makedirs(OUTDIR, exist_ok=True)
+
+
+def _request_json(url: str, params: dict, timeout: int = 60) -> list:
+    r = requests.get(url, params=params, timeout=timeout)
+    if r.status_code != 200:
+        raise RuntimeError(
+            f"HTTP {r.status_code}\nURL: {r.url}\nResponse: {r.text[:800]}"
+        )
+    data = r.json()
+    if not isinstance(data, list) or len(data) < 2:
+        raise RuntimeError(
+            f"Unexpected API response.\nURL: {r.url}\nGot: {data}"
+        )
+    return data
+
+
+def census_get_group(year: int, group: str) -> pd.DataFrame:
+    """Download a full ACS 5-year group table for all Cook County tracts."""
+    base   = f"https://api.census.gov/data/{year}/acs/acs5"
+    params = {
+        "get": f"group({group})",
+        "for": "tract:*",
+        "in":  f"state:{STATE_FIPS} county:{COUNTY_FIPS}",
+    }
+    if CENSUS_API_KEY:
+        params["key"] = CENSUS_API_KEY
+    data = _request_json(base, params=params)
+    df   = pd.DataFrame(data[1:], columns=data[0])
+    df["GEOID"] = df["state"] + df["county"] + df["tract"]
+    return df
+
+
+def to_num(df: pd.DataFrame, cols: list) -> None:
+    for c in cols:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+
+
+def build_tract_features(acs_year: int) -> pd.DataFrame:
+    inc  = census_get_group(acs_year, "B19013")   # median income
+    edu  = census_get_group(acs_year, "B15002")   # educational attainment
+    race = census_get_group(acs_year, "B03002")   # race / Hispanic origin
+    ten  = census_get_group(acs_year, "B25003")   # housing tenure
+    age  = census_get_group(acs_year, "B01001")   # age structure
+
+    out = pd.DataFrame({"GEOID": inc["GEOID"]})
+
+    # Median household income
+    out["median_hh_income"] = pd.to_numeric(inc["B19013_001E"], errors="coerce")
+
+    # % College educated (BA+ among age 25+) via B15002
+    edu_cols = [
+        "B15002_001E",
+        "B15002_015E", "B15002_016E", "B15002_017E", "B15002_018E",
+        "B15002_032E", "B15002_033E", "B15002_034E", "B15002_035E",
+    ]
+    edu = edu[["GEOID"] + edu_cols].copy()
+    to_num(edu, edu_cols)
+    edu["ba_plus"] = (
+        edu["B15002_015E"] + edu["B15002_016E"] +
+        edu["B15002_017E"] + edu["B15002_018E"] +
+        edu["B15002_032E"] + edu["B15002_033E"] +
+        edu["B15002_034E"] + edu["B15002_035E"]
+    )
+    edu["pct_college"] = edu["ba_plus"] / edu["B15002_001E"]
+    out = out.merge(edu[["GEOID", "pct_college"]], on="GEOID", how="left")
+
+    # % Black and % Hispanic
+    race_cols = ["B03002_001E", "B03002_004E", "B03002_012E"]
+    race = race[["GEOID"] + race_cols].copy()
+    to_num(race, race_cols)
+    race["pct_black"]    = race["B03002_004E"] / race["B03002_001E"]
+    race["pct_hispanic"] = race["B03002_012E"] / race["B03002_001E"]
+    out = out.merge(race[["GEOID", "pct_black", "pct_hispanic"]],
+                    on="GEOID", how="left")
+
+    # % Renter occupied
+    ten_cols = ["B25003_001E", "B25003_003E"]
+    ten = ten[["GEOID"] + ten_cols].copy()
+    to_num(ten, ten_cols)
+    ten["pct_renter"] = ten["B25003_003E"] / ten["B25003_001E"]
+    out = out.merge(ten[["GEOID", "pct_renter"]], on="GEOID", how="left")
+
+    # % Age 18–29 and Voting Age Population (VAP)
+    age_cols = [
+        "B01001_001E",
+        "B01001_003E", "B01001_004E", "B01001_005E", "B01001_006E",
+        "B01001_027E", "B01001_028E", "B01001_029E", "B01001_030E",
+        "B01001_007E", "B01001_031E",
+        "B01001_008E", "B01001_009E", "B01001_010E",
+        "B01001_032E", "B01001_033E", "B01001_034E",
+        "B01001_011E", "B01001_035E",
+    ]
+    age = age[["GEOID"] + age_cols].copy()
+    to_num(age, age_cols)
+    age["pop_under18"] = (
+        age["B01001_003E"] + age["B01001_004E"] +
+        age["B01001_005E"] + age["B01001_006E"] +
+        age["B01001_027E"] + age["B01001_028E"] +
+        age["B01001_029E"] + age["B01001_030E"]
+    )
+    age["vap"] = age["B01001_001E"] - age["pop_under18"]
+    age["pop_18_29"] = (
+        (age["B01001_007E"] + age["B01001_031E"]) +
+        (age["B01001_008E"] + age["B01001_009E"] + age["B01001_010E"] +
+         age["B01001_032E"] + age["B01001_033E"] + age["B01001_034E"]) +
+        (age["B01001_011E"] + age["B01001_035E"])
+    )
+    age["pct_18_29"] = age["pop_18_29"] / age["B01001_001E"]
+    out = out.merge(age[["GEOID", "vap", "pct_18_29"]], on="GEOID", how="left")
+
+    # Clip impossible share values
+    for c in ["pct_college", "pct_black", "pct_hispanic", "pct_renter", "pct_18_29"]:
+        out.loc[(out[c] < 0) | (out[c] > 1), c] = pd.NA
+
+    return out
+
+
+# Run for all election years
+for election_year, acs_year in ELECTION_TO_ACS_API_YEAR.items():
+    print(f"Downloading ACS {acs_year} for election {election_year}...")
+    df = build_tract_features(acs_year)
+    df.insert(0, "election_year", election_year)
+    outpath = os.path.join(OUTDIR,
+                           f"acs_{acs_year}_for_election_{election_year}.csv")
+    df.to_csv(outpath, index=False)
+    print(f"  Saved {outpath}  | rows={len(df):,}")
+    time.sleep(0.5)
+
+print("ACS download complete.")
+```
+
+<!--
+### 1.2 ACS Post-Processing
+-->
+
+```{python}
+#| code-fold: true
+#| output: false
+#| code-summary: "ACS post-processing — negative incomes cleaned and saved to derived-data"
+
+# The Census API returns -666666666 for missing/suppressed income values.
+# Read from raw ACS folder, clean, and save to derived-data/ACS Clean Data.
+os.makedirs(ACS_CLEAN_DIR, exist_ok=True)
+
+for fname in ACS_FILES.values():
+    fpath = DATA_ACS_RAW / fname
+    df = pd.read_csv(fpath)
+    df["median_hh_income"] = pd.to_numeric(df["median_hh_income"],
+                                            errors="coerce")
+    df.loc[df["median_hh_income"] < 0, "median_hh_income"] = 0
+    df.to_csv(ACS_CLEAN_DIR / fname, index=False)
+
+print("Post-processing complete.")
+```
+
+<!--
+### 1.3 Voter Turnout Cleaning
+-->
+```{python}
+#| code-fold: true
+#| output: false
+#| code-summary: "Voter turnout cleaning — ward-level CSVs parsed into precinct rows"
+
+def clean_voter_csv(path_in: Path, path_out: Path) -> None:
+    df = pd.read_csv(path_in, dtype=str)
+
+    # Drop citywide summary rows at top
+    df = df.iloc[2:].reset_index(drop=True)
+    df = df.dropna(how="all").reset_index(drop=True)
+
+    first_col = df.columns[0]
+    fc = df[first_col].astype(str).str.strip()
+    df[first_col] = fc
+
+    # Forward-fill ward number from "Ward X" header rows
+    is_ward = fc.str.startswith("Ward ")
+    ward_series = (
+        fc.where(is_ward)
+          .str.replace("Ward", "", n=1)
+          .str.strip()
+          .str.extract(r"(\d+)")[0]
+    )
+    df["Ward"] = ward_series.ffill()
+
+    # Remove ward headers, column-label rows, and ward-total rows
+    is_precinct_header = fc.eq("Precinct")
+    is_total           = fc.str.startswith("Total")
+    df_clean = df[~(is_ward | is_precinct_header | is_total)].copy()
+
+    # Standardise column names
+    df_clean = df_clean.rename(columns={
+        df_clean.columns[0]: "Precinct",
+        df_clean.columns[1]: "Registered Voters",
+        df_clean.columns[2]: "Ballots Cast",
+        df_clean.columns[3]: "Turnout",
+    })
+    df_clean = df_clean[["Ward", "Precinct",
+                          "Registered Voters", "Ballots Cast", "Turnout"]]
+
+    df_clean["Ward"]    = pd.to_numeric(df_clean["Ward"],
+                                        errors="coerce").astype("Int64")
+    df_clean["Precinct"] = pd.to_numeric(df_clean["Precinct"],
+                                          errors="coerce").astype("Int64")
+    df_clean.to_csv(path_out, index=False)
+
+clean_voter_dir = Path("data/derived-data/voter-turnout-and-registration-data")
+os.makedirs(clean_voter_dir, exist_ok=True)
+
+for year in ELECTION_YEARS:
+    in_path  = DATA_VOTER_RAW / f"{year}.csv"
+    out_path = clean_voter_dir / f"{year}_clean.csv"
+    clean_voter_csv(in_path, out_path)
+    print(f"Cleaned {year}")
+
+print("Voter Turnout data cleaning complete.")
+```
+
+<!--
+## Part 2 – Geographic Foundation
+-->
+```{python}
+#| label: geo-foundation
+#| output: false
+#| code-summary: "Load Chicago boundary and filter census tracts"
+
+# We load the Chicago city boundary shapefile and the 2020 Census tract
+# shapefile (all of Illinois), then filter to the 1,309+ Cook County tracts
+# that intersect the Chicago city boundary. These **2020 tract boundaries are
+# used consistently for all five election years** to ensure geographic
+# comparability across time.
+
+# Chicago city boundary (single polygon after dissolve)
+chi_boundary = gpd.read_file(CITY_BNDRY).to_crs(CRS_PROJ)
+chi_union    = chi_boundary.dissolve().geometry.iloc[0]
+
+# 2020 Census tract shapefile — all of Illinois
+tracts_all  = gpd.read_file(TRACT_SHP).to_crs(CRS_PROJ)
+
+# Keep only Cook County tracts
+tracts_cook = tracts_all[tracts_all["COUNTYFP"] == "031"].copy()
+
+# Keep tracts that intersect the Chicago city boundary
+tracts_chicago = (
+    tracts_cook[tracts_cook.geometry.intersects(chi_union)]
+    .copy()
+    .reset_index(drop=True)
+)
+
+print(f"Illinois tracts total : {len(tracts_all):>6,}")
+print(f"Cook County tracts    : {len(tracts_cook):>6,}")
+print(f"Chicago tracts kept   : {len(tracts_chicago):>6,}")
+print(f"Columns available     : {list(tracts_chicago.columns)}")
+
+assert len(tracts_chicago) > 800, f"Expected 800+ Chicago tracts, got {len(tracts_chicago)}"
+
+```
+
+<!--
+## Part 3 – Attach ACS Demographics to Census Tracts
+-->
+
+```{python}
+#| label: acs-merge
+#| output: false
+#| code-summary: "Helper: merge ACS data onto Chicago tract GeoDataFrame"
+
+# For each election year we merge the corresponding ACS 5-year CSV onto the
+# Chicago tract `GeoDataFrame` using the `GEOID` key. Income values stored as
+# `0` (the post-processing placeholder for Census missing values) are converted
+# to `NaN` before merging so they do not bias weighted averages.
+
+
+def load_acs(year: int) -> pd.DataFrame:
+    """Load cleaned ACS CSV and convert 0-income placeholder to NaN."""
+    df = pd.read_csv(ACS_CLEAN_DIR / ACS_FILES[year])
+    df["median_hh_income"] = pd.to_numeric(df["median_hh_income"],
+                                            errors="coerce")
+    # 0 was used as placeholder for missing/suppressed Census income values
+    df.loc[df["median_hh_income"] == 0, "median_hh_income"] = np.nan
+    return df
+
+
+def make_tract_geodf(year: int, chicago_tracts: gpd.GeoDataFrame
+                     ) -> gpd.GeoDataFrame:
+    """Merge ACS demographic data onto the Chicago tract GeoDataFrame."""
+    acs = load_acs(year)
+    gdf = chicago_tracts[["GEOID", "geometry"]].copy()
+    gdf["GEOID"] = gdf["GEOID"].astype(str)
+    acs = acs.copy()
+    acs["GEOID"] = acs["GEOID"].astype(str)
+
+    # Merge diagnostics
+    tract_set = set(gdf["GEOID"])
+    acs_set   = set(acs["GEOID"])
+    print(f"  Tracts not in ACS: {len(tract_set - acs_set)}")
+    print(f"  ACS tracts not in Chicago: {len(acs_set - tract_set)}")
+
+    gdf = gdf.merge(acs.drop(columns=["election_year"]),
+                    on="GEOID", how="left")
+
+    assert len(gdf) == len(chicago_tracts), \
+        f"Merge changed row count: {len(chicago_tracts)} to {len(gdf)}"
+
+    return gdf
+
+
+# Quick verification for 2024
+tract_2024 = make_tract_geodf(2024, tracts_chicago)
+n_income   = tract_2024["median_hh_income"].notna().sum()
+print(f"2024 — tracts: {len(tract_2024):,}  |  income coverage: {n_income} non-null")
+tract_2024[["GEOID", "median_hh_income", "pct_college",
+            "pct_black", "pct_hispanic", "pct_renter",
+            "vap", "pct_18_29"]].head(4)
+```
+
+<!--
+## Part 4 – Prepare Precinct Geometry
+-->
+```{python}
+#| label: precinct-geometry
+#| output: false
+#| code-summary: "Helper: load and standardise precinct boundary GeoDataFrame"
+
+# Each election year uses the appropriate precinct boundary file (see mapping
+# table in the overview). We standardise the precinct identifier to a **5-character
+# string** — zero-padded ward number (2 digits) followed by zero-padded precinct
+# number (3 digits) — matching the format used in the voter-turnout CSVs.
+
+def load_precinct_gdf(year: int) -> gpd.GeoDataFrame:
+    """
+    Load the correct precinct GeoJSON for a given election year and return a
+    GeoDataFrame with a standardised 'precinct_id' (WWPPP format).
+    """
+    fname = PRECINCT_FILES[year]
+    gdf   = gpd.read_file(PRECINCT_DIR / fname).to_crs(CRS_PROJ)
+
+    gdf["ward_num"]     = pd.to_numeric(gdf["ward"],     errors="coerce")
+    gdf["precinct_num"] = pd.to_numeric(gdf["precinct"], errors="coerce")
+
+    # Drop rows where ward/precinct cannot be parsed
+    gdf = gdf.dropna(subset=["ward_num", "precinct_num"]).copy()
+    gdf["ward_num"]     = gdf["ward_num"].astype(int)
+    gdf["precinct_num"] = gdf["precinct_num"].astype(int)
+
+    # 5-character ID:  ward 27, precinct 36  to  "27036"
+    gdf["precinct_id"] = (
+        gdf["ward_num"].apply(lambda w: f"{w:02d}") +
+        gdf["precinct_num"].apply(lambda p: f"{p:03d}")
+    )
+
+    # Remove geometric duplicates (keep first)
+    gdf = gdf.drop_duplicates("precinct_id").reset_index(drop=True)
+    return gdf[["precinct_id", "ward_num", "precinct_num", "geometry"]]
+
+
+# Preview
+for yr in ELECTION_YEARS:
+    g = load_precinct_gdf(yr)
+    print(f"{yr}: {len(g):,} unique precincts")
+```
+
+<!--
+## Part 5 – Spatial Overlay: Tract Demographics to Precinct Level
+-->
+```{python}
+#| label: spatial-overlay
+#| output: false
+#| code-summary: "Area-weighted spatial interpolation function (sjoin + intersection"
+
+# We use **area-weighted interpolation** to convert census-tract-level ACS estimates into precinct-level estimates.
+
+def area_weighted_interpolate(
+    precincts_gdf : gpd.GeoDataFrame,
+    tracts_gdf    : gpd.GeoDataFrame,
+    demo_cols     : list,
+    vap_col       : str = "vap",
+) -> pd.DataFrame:
+    """
+    Interpolate tract-level demographics onto precincts via area weighting.
+
+    Uses gpd.sjoin to identify overlapping precinct–tract pairs, then
+    computes intersection geometries and area-based weights.
+    """
+    prec   = precincts_gdf[["precinct_id", "geometry"]].copy()
+    tracts = tracts_gdf[["GEOID", "geometry"] + demo_cols + [vap_col]].copy()
+
+    # Precinct area in projected units (sq metres)
+    prec["_prec_area"] = prec.geometry.area
+
+    # Step 1: sjoin to find overlapping precinct–tract pairs 
+    joined = gpd.sjoin(prec, tracts, how="inner", predicate="intersects")
+    if "index_right" in joined.columns:
+        joined = joined.drop(columns=["index_right"])
+    print(f"    sjoin pairs: {len(joined):,}")
+
+    # Step 2: Compute intersection geometry and area weights 
+    # Retrieve the original tract geometry for each matched pair
+    joined = joined.merge(
+        tracts[["GEOID", "geometry"]].rename(columns={"geometry": "_tract_geom"}),
+        on="GEOID",
+        how="left",
+    )
+    joined["_inter_geom"] = joined.apply(
+        lambda row: row["geometry"].intersection(row["_tract_geom"]), axis=1
+    )
+    joined["_inter_area"] = joined["_inter_geom"].apply(lambda g: g.area)
+    joined["_w"] = joined["_inter_area"] / joined["_prec_area"]
+
+    results = {}
+
+    # Demographic rate / percentage columns 
+    for col in demo_cols:
+        joined["_wv"] = joined["_w"] * joined[col]
+        valid = joined.dropna(subset=[col])
+        grp = valid.groupby("precinct_id").agg(
+            _wsum   = ("_wv", "sum"),
+            _wdenom = ("_w",  "sum"),
+        )
+        grp[col] = grp["_wsum"] / grp["_wdenom"]
+        results[col] = grp[col]
+
+    # VAP: proportional count 
+    joined["_w_vap"] = joined["_w"] * joined[vap_col].fillna(0)
+    vap_grp = (
+        joined.groupby("precinct_id")["_w_vap"]
+             .sum()
+             .rename(vap_col)
+    )
+    results[vap_col] = vap_grp
+
+    out = pd.concat(results, axis=1).reset_index()
+    return out
+```
+
+<!--
+## Part 6 – Load and Standardise Voter Turnout
+-->
+```{python}
+#| label: turnout-load
+#| output: false
+#| code-summary: "Helper: load cleaned voter file and compute turnout rate"
+
+def load_turnout(year: int) -> pd.DataFrame:
+    """
+    Load cleaned voter CSV, build standardised precinct_id, and compute
+    turnout rate (ballots cast / registered voters).
+    """
+    df = pd.read_csv(VOTER_CLEAN_DIR / f"{year}_clean.csv")
+
+    # Drop rows without ward or precinct
+    df = df.dropna(subset=["Ward", "Precinct"]).copy()
+    df["Ward"]     = df["Ward"].astype(int)
+    df["Precinct"] = df["Precinct"].astype(int)
+
+    # 5-character precinct ID matching the geometry files
+    df["precinct_id"] = (
+        df["Ward"].apply(lambda w: f"{w:02d}") +
+        df["Precinct"].apply(lambda p: f"{p:03d}")
+    )
+
+    df["registered_voters"] = pd.to_numeric(df["Registered Voters"],
+                                             errors="coerce")
+    df["ballots_cast"]      = pd.to_numeric(df["Ballots Cast"],
+                                             errors="coerce")
+
+    # Turnout rate — drop impossible values (≤ 0 or > 1)
+    df["turnout_rate"] = df["ballots_cast"] / df["registered_voters"]
+    df = df[(df["turnout_rate"] > 0) & (df["turnout_rate"] <= 1.0)].copy()
+
+    df["election_year"] = year
+    return df[["election_year", "precinct_id", "Ward", "Precinct",
+               "registered_voters", "ballots_cast", "turnout_rate"]]
+```
+
+<!--
+## Part 7 – Build Master Panel Dataset
+-->
+```{python}
+#| label: master-dataset
+#| output: false
+#| code-summary: "Run full pipeline — ~5 min for spatial overlays"
+
+# We run the full pipeline for all five election years and stack the results
+# into a single master dataset. Each row represents one precinct in one
+# election year.
+
+os.makedirs(ROOT / "data" / "derived-data", exist_ok=True)
+
+all_years = []
+
+for year in ELECTION_YEARS:
+    print(f"\n Processing {year} ")
+
+    # Step 4 – Precinct geometry
+    prec_gdf = load_precinct_gdf(year)
+    print(f"  Precincts loaded : {len(prec_gdf):,}")
+
+    # Step 3 – Tract demographics for this year
+    tract_gdf = make_tract_geodf(year, tracts_chicago)
+
+    # Step 5 – Spatial overlay (sjoin + area-weighted interpolation)
+    demo_prec = area_weighted_interpolate(prec_gdf, tract_gdf,
+                                          DEMO_COLS, vap_col="vap")
+    print(f"  Demo interpolated: {len(demo_prec):,} precincts")
+
+    # Step 6 – Turnout data
+    turnout_df = load_turnout(year)
+    print(f"  Turnout rows     : {len(turnout_df):,}")
+
+    # Merge turnout + demographics
+    merged = turnout_df.merge(demo_prec, on="precinct_id", how="inner")
+    print(f"  Merged (inner)   : {len(merged):,}")
+
+    # Registration rate = registered voters / VAP
+    merged["registration_rate"] = (
+        merged["registered_voters"] / merged["vap"]
+    )
+    merged["registration_rate"] = merged["registration_rate"].clip(upper=1.0)
+
+    n_inc = merged["median_hh_income"].notna().sum()
+    print(f"  Income coverage  : {n_inc} / {len(merged)}")
+
+    all_years.append(merged)
+
+master = pd.concat(all_years, ignore_index=True)
+
+# Save to disk
+master_path = ROOT / "data"/ "derived-data" / "master_panel.csv"
+master.to_csv(master_path, index=False)
+
+print(f"\n✓ Master dataset saved to {master_path}")
+print(f"  Shape: {master.shape[0]:,} rows × {master.shape[1]} columns")
+```
+
+
+## Part 8 – Socioeconomic Status Index (SES)
+
+```{python}
+#| label: SES Index
+#| output: false
+#| code-summary: "Index Construction using principal component analysis"
+
+def zscore_safe(s: pd.Series) -> pd.Series:
+    """Z-score with protection against all-NA or zero-variance series."""
+    s = pd.to_numeric(s, errors="coerce")
+    mu = s.mean()
+    sd = s.std(ddof=0)
+    if pd.isna(sd) or sd == 0:
+        return pd.Series(np.nan, index=s.index)
+    return (s - mu) / sd
+
+
+def minmax_safe(s: pd.Series) -> pd.Series:
+    """Min-max scaling to [0,1] with protection against constant series."""
+    s = pd.to_numeric(s, errors="coerce")
+    lo = s.min()
+    hi = s.max()
+    denom = hi - lo
+    if pd.isna(denom) or denom == 0:
+        return pd.Series(np.nan, index=s.index)
+    return (s - lo) / denom
+
+
+master_idx = master.copy()
+
+pca_vars = ["median_hh_income", "pct_college", "pct_renter", "pct_18_29"]
+
+pca_out = []
+for yr, df in master_idx.groupby("election_year"):
+    sub = df[["election_year", "precinct_id"] + pca_vars].dropna().copy()
+    if len(sub) < 10:
+        continue
+
+    X = sub[pca_vars].copy()
+
+    # Orient so higher = more advantage 
+    X["pct_renter"] = -X["pct_renter"]
+    X["pct_18_29"]  = -X["pct_18_29"]
+
+    # Standardize then PCA
+    Xs = StandardScaler().fit_transform(X)
+    pc1 = PCA(n_components=1).fit_transform(Xs).ravel()
+
+    tmp = sub[["election_year", "precinct_id"]].copy()
+    tmp["ses_pca"] = pc1
+    pca_out.append(tmp)
+
+ses_pca_df = pd.concat(pca_out, ignore_index=True) if len(pca_out) else pd.DataFrame(
+    columns=["election_year", "precinct_id", "ses_pca"]
+)
+
+# Merge PCA scores back 
+master_idx = master_idx.merge(ses_pca_df, on=["election_year", "precinct_id"], how="left")
+
+# Rescale PCA within-year to 0-100
+master_idx["ses_pca_0_100"] = master_idx.groupby("election_year")["ses_pca"].transform(minmax_safe) * 100
+
+```
+
+
+
+**Analysis Approach and Dashboard**
+
+Our project combines static visual analysis with an interactive dashboard that allows users to explore spatial turnout patterns across the City, relationship between turnout and socioeconomic status, and how demographic correlations with turnout evolve across election cycles.
+
+
+**Findings**
+
+**Spatial patterns in voter turnout**
+
+Our first visualization maps turnout rates across Chicago precincts for each presidential election.
+
+The maps reveal clear and persistent spatial patterns in voter participation. Higher-turnout precincts consistently appear in parts of the North Side and lakefront neighborhoods, while lower turnout is more common in parts of the South and West sides of the city. Importantly, these spatial patterns remain visible across all five election years, illustrating that turnout differences are geographically clustered rather than randomly distributed across the city.
+
+Even in high-turnout presidential elections (2008 and 2012), relative differences between neighborhoods remain strikingly stable. This suggests that turnout inequality is not driven solely by specific candidates or campaign mobilization. Instead, it reflects deeper structural differences across neighborhoods.
+
+## Part 8 – Visualizations
+
+### 8.1 Choropleth Maps (2024)
+
+```{python}
+#| label: fig-chloropleth Map
+#| fig-cap: "Avg turnout rate by precincts"
+
+def make_turnout_choropleth(gdf, year):
+    geojson_data = json.loads(gdf.to_json())
+
+    year_label = (
+        alt.Chart(pd.DataFrame({"label": [str(year)]}))
+        .mark_text(fontSize=18, fontWeight="bold")
+        .encode(text="label:N")
+        .properties(width=240, height=6)
+    )
+
+    map_chart = (
+        alt.Chart(alt.Data(values=geojson_data["features"]))
+        .mark_geoshape(stroke="white", strokeWidth=0.1)
+        .encode(
+            color=alt.Color(
+                "properties.turnout_rate:Q",
+                scale=alt.Scale(scheme="redyellowgreen", domain=[0.2, 0.9]),
+                legend=alt.Legend(
+                    title="Turnout Rate",
+                    orient="right",
+                    gradientLength=280,
+                    gradientThickness=18,
+                    titleFontSize=14,
+                    labelFontSize=12
+                )
+            ),
+            tooltip=[
+                alt.Tooltip("properties.precinct_id:N", title="Precinct"),
+                alt.Tooltip("properties.turnout_rate:Q", format=".3f", title="Turnout Rate"),
+            ],
+        )
+        .project(type="identity", reflectY=True)
+        .properties(width=240, height=320)
+    )
+
+    return alt.vconcat(year_label, map_chart, spacing=0)
+
+
+charts = []
+
+for year in [2008, 2012, 2016, 2020, 2024]:
+    precgeo = load_precinct_gdf(year)
+    mapdata = precgeo.merge(
+        master[master["election_year"] == year][["precinct_id", "turnout_rate"]],
+        on="precinct_id",
+        how="left"
+    )
+    mapdatageo = mapdata.to_crs("EPSG:4326")
+    charts.append(make_turnout_choropleth(mapdatageo, year))
+
+choropleth_chart = (
+    alt.hconcat(*charts, spacing=6)
+    .resolve_scale(color="shared")
+    .properties(title="Chicago Precinct-Level Voter Turnout Rate (2008–2024)")
+)
+
+display_altair_png(choropleth_chart, scale=3)
+```
+
+
+
+**Socioeconomic status (SES) and turnout**
+
+To explore whether neighborhood socioeconomic conditions are associated with voter participation, we examine the relationship between turnout and the SES index across election years The scatter plots show a strong and consistent positive relationship between socioeconomic status and turnout. Precincts with higher SES scores tend to exhibit higher turnout rates, while precincts with lower SES scores generally show lower participation.
+
+This relationship appears in every election cycle in our dataset. While turnout increases during highly competitive elections, the relative gap between high-SES and low-SES precincts remains visible.These results suggest that socioeconomic conditions are strongly associated with participation. Neighborhood characteristics such as income levels, educational attainment, and age composition likely shape both the resources and institutional familiarity that facilitate voter engagement.
+
+
+### 8.2 Scatter plot-Turnout vs Socioeconomic index by year
+
+```{python}
+#| label: scatter-turnout vs SES Index
+#| fig-cap: "Avg turnout rate against socioeconomic index"
+
+plot_ses = master_idx[["election_year", "turnout_rate", "ses_pca_0_100"]].dropna().copy()
+plot_ses["turnout_pct"] = (plot_ses["turnout_rate"] * 100).clip(0, 100)
+plot_ses["year_str"] = plot_ses["election_year"].astype(str)
+
+base = alt.Chart(plot_ses).properties(width=150, height=170)
+
+pts = (
+    base
+    .mark_bar(size=10, opacity=0.45)
+    .encode(
+        x=alt.X("ses_pca_0_100:Q", title="SES (PCA index)", scale=alt.Scale(domain=[0, 100])),
+        y=alt.Y("turnout_pct:Q", title="Turnout (%)", scale=alt.Scale(domain=[0, 100])),
+        color=alt.Color(
+            "turnout_pct:Q",
+            title="Turnout (%)",
+            scale=alt.Scale(scheme="redyellowgreen", domain=[0, 100]),
+        ),
+        tooltip=[
+            alt.Tooltip("election_year:O", title="Year"),
+            alt.Tooltip("ses_pca_0_100:Q", title="SES (0–100)", format=".1f"),
+            alt.Tooltip("turnout_pct:Q", title="Turnout (%)", format=".1f"),
+        ],
+    )
+)
+line = (
+    base
+    .transform_filter(alt.datum.ses_pca_0_100 >= 0)
+    .transform_filter(alt.datum.ses_pca_0_100 <= 100)
+    .transform_regression("ses_pca_0_100", "turnout_pct", groupby=["year_str"], extent=[0, 100])
+    .mark_line(color="black", strokeWidth=2, clip=True)
+    .encode(
+        x="ses_pca_0_100:Q",
+        y="turnout_pct:Q",
+    )
+)
+
+chart_ses = (
+    (pts + line)
+    .facet(
+        facet=alt.Facet("year_str:N", title="Election year", sort=[str(y) for y in ELECTION_YEARS]),
+        columns=5,
+    )
+    .resolve_scale(color="shared")
+    .properties(title="Turnout Rate vs Socioeconomic Status by Election Year")
+)
+
+display_altair_png(chart_ses, scale=3)
+```
+
+
+
+**Fixed Effects Regression Model**
+
+To quantify this relationship more formally, we estimate a two-way fixed effects panel regression that controls for both precinct-level and election-year differences. The regression results indicate a positive and statistically significant relationship between socioeconomic status and turnout. Substantively, the estimates suggest that if a precinct becomes one standard deviation more socioeconomically advantaged, turnout increases by approximately 3.3 percentage points. Tne results reinforce the descriptive patterns observed in the visualizations.
+
+
+### 8.3 Two-way Fixed Effects Panel Regression
+```{python}
+#| label: OLS Panel Regression
+#| code-summary: "Two-way fixed effects panel regression model"
+
+fe_df = master_idx[[
+    "precinct_id",
+    "election_year",
+    "turnout_rate",
+    "ses_pca"
+]].dropna().copy()
+
+# Set panel index
+fe_df = fe_df.set_index(["precinct_id", "election_year"])
+
+# Dependent variable
+y = fe_df["turnout_rate"]
+
+# Independent variable
+X = fe_df[["ses_pca"]]
+
+# Add constant (required)
+X = sm.add_constant(X)
+
+### Two-way Fixed Effects
+model = PanelOLS(
+    y,
+    X,
+    entity_effects=True,   # precinct FE
+    time_effects=True      # year FE
+)
+
+results = model.fit(cov_type="clustered", cluster_entity=True)
+
+print(results.summary.tables[1])
+```
+
+
+
+**Demographic patterns in turnout**
+
+Finally, we examine how turnout correlates with several demographic characteristics across election cycles. The heatmap summarizes the Spearman correlation between precinct turnout rates and key demographic variables for each election year.
+
+Several patterns emerge clearly. Income and education show the strongest and most consistent positive relationships with turnout across election cycles. Precincts with higher household incomes and larger shares of college-educated residents consistently exhibit higher participation rates. By contrast, several demographic characteristics are negatively associated with turnout. Precincts with higher shares of renters and younger residents tend to exhibit lower participation rates. Similarly, the share of Black residents shows a negative relationship with turnout in most election years, particularly in more recent elections.
+
+Overall, the heatmap confirms that turnout differences across Chicago are strongly associated with structural neighborhood characteristics.
+
+
+### 8.4 Heatmap: Demographics vs Turnout Rate
+
+```{python}
+#| label: fig-corr-heatmap
+#| fig-cap: "Spearman correlations between precinct turnout rate and demographic variables by year"
+
+def spearman_corr(x, y):
+    """Compute Spearman rank correlation using pandas rank method."""
+    valid = pd.DataFrame({"x": x, "y": y}).dropna()
+    if len(valid) < 10:
+        return np.nan
+    return valid["x"].rank().corr(valid["y"].rank())
+
+demo_labels = {
+    "median_hh_income": "HH Income",
+    "pct_college":      "% College",
+    "pct_black":        "% Black",
+    "pct_hispanic":     "% Hispanic",
+    "pct_renter":       "% Renter",
+    "pct_18_29":        "% Age 18–29",
+}
+
+corr_rows = []
+for year in ELECTION_YEARS:
+    sub = master[master["election_year"] == year].copy()
+    row = {"Year": year}
+    for col in DEMO_COLS:
+        valid = sub[["turnout_rate", col]].dropna()
+        if len(valid) >= 30:
+            r = spearman_corr(valid["turnout_rate"], valid[col])
+            row[col] = round(r, 3)
+        else:
+            row[col] = np.nan
+    corr_rows.append(row)
+
+corr_df = (
+    pd.DataFrame(corr_rows)
+      .set_index("Year")
+      .rename(columns=demo_labels)
+)
+
+# Reshape to long form for Altair
+corr_long = corr_df.reset_index().melt(
+    id_vars="Year", var_name="Variable", value_name="Spearman_r"
+)
+
+chart_heatmap = (
+    alt.Chart(corr_long)
+    .mark_rect(stroke="white", strokeWidth=1)
+    .encode(
+        x=alt.X(
+            "Variable:N",
+            title="Demographics",
+            sort=list(demo_labels.values())
+        ),
+        y=alt.Y(
+            "Year:O",
+            title="Election Year"
+        ),
+        color=alt.Color(
+            "Spearman_r:Q",
+            scale=alt.Scale(
+                scheme="redyellowgreen",   
+                domain=[-0.75, 0.75]
+            ),
+            title="Spearman r"
+        ),
+        tooltip=[
+            alt.Tooltip("Year:O"),
+            alt.Tooltip("Variable:N"),
+            alt.Tooltip("Spearman_r:Q", format=".3f"),
+        ],
+    )
+)
+
+chart_corr = (
+    chart_heatmap
+    .properties(
+        width=500,
+        height=220,
+        title="Spearman Correlation: Precinct Turnout Rate vs Demographic Variables"
+    )
+)
+
+display_altair_png(chart_corr)
+```
+
+
+**Policy Implications and Recommendations**
+
+These findings highlight persistent inequalities in political participation across Chicago neighborhoods. Lower-socioeconomic areas consistently exhibit lower turnout, suggesting that barriers to participation remain concentrated in particular parts of the city.
+
+Education emerges as the most consistent predictor of turnout differences. This suggests that turnout gaps may reflect differences in civic knowledge, access to political information, and familiarity with voting institutions rather than purely financial constraints.
+
+These patterns have several policy implications
+
+Civic engagement efforts could be more effectively targeted toward lower-SES precincts where participation gaps are largest. Community-based outreach programs, voter information campaigns, and neighborhood organizing initiatives may help reduce informational barriers and encourage participation. Besides, civic education initiatives, particularly those focused on younger voters, may help address the lower turnout observed in precincts with higher shares of young residents. Programs that improve understanding of the voting process and emphasize the importance of participation may strengthen long-term engagement.
+
+Importantly, these policies are not solely the responsibility of government agencies. Civic organizations, campaigns, and community groups also play critical roles in mobilizing participation in targetted areaa.
+ 
+
+
+**Interactive Dashboard and Policy Use**
+
+In addition to the static analysis presented in this report, we developed an interactive dashboard that allows users to explore Chicago’s voter turnout patterns across precincts and election years. 
+
+This tool can support election administrators, local governments, and civic organizations in identifying neighborhoods where voter engagement initiatives may have the greatest impact. It can also help campaign strategists and mobilization groups locate areas where turnout potential appears underutilized and where targeted outreach may be most effective.
+
+By presenting these patterns in an interactive format, the dashboard translates complex data into practical insights that can inform more targeted policy interventions.
+
+
+
+**Limitations**
+
+Several limitations should be considered when interpreting these results.
+
+- First, the analysis identifies associations rather than causal relationships. Turnout is influenced by many factors not captured in this dataset, including campaign mobilization, candidate characteristics, and historical voting behavior.
+
+- Second, demographic characteristics are estimated using area-weighted interpolation from census tracts, which introduces some measurement uncertainty when geographic boundaries do not align perfectly.
+
+- Finally, voter participation is shaped by complex social and institutional factors that extend beyond the scope of this analysis.
+
+
+
+**Conclusion**
+
+Despite these limitations, the analysis provides a clear picture of persistent turnout inequality across Chicago. By combining spatial analysis, statistical modeling, and interactive visualization, this project provides a foundation for understanding who votes in Chicago, and where efforts to strengthen civic participation may be most needed.
+
+
+
+
+
+
