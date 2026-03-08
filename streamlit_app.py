@@ -15,6 +15,7 @@ from pathlib import Path
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
+
 #  Page configuration 
 st.set_page_config(
     page_title="Chicago Voter Turnout Dashboard",
@@ -81,7 +82,7 @@ def turnout_to_color(rate):
         return [255, int(255 * t), 0, 180]
     else:
         t = (r - 0.5) / 0.5
-        return [int(255 * (1 - t)), int(255 - 127 * t), 0, 180]
+        return [int(255 * (1 - t)), int(255 - 127 * t), 0, 190]
 
 
 def minmax_safe(s):
@@ -148,12 +149,68 @@ def load_precinct_gdf(year):
 
 
 #  Sidebar navigation 
-page = st.sidebar.radio("Navigation", ["Overview", "Dashboard"], index=0)
+# Navigation
+page = st.sidebar.radio("#### **Navigation**", ["Overview", "Dashboard"], index=0)
+
+# Divider
 st.sidebar.markdown("---")
-st.sidebar.caption(
-    "Group 37 - Rajat Kanti Paul & Sakkhi Raheel\n\n"
-    "PPHA 30538 - University of Chicago"
+
+# How to use the dashboard
+st.sidebar.markdown("#### **How to Use**")
+st.sidebar.write(
+"""
+Use the Dashboard page to explore how voter turnout varies across 
+Chicago precincts and demographic characteristics.
+
+*Navigate between pages using the menu above.*
+"""
 )
+
+# Dataset information
+st.sidebar.markdown("#### **Dataset**")
+st.sidebar.write("Elections analyzed: 2008–2024")
+st.sidebar.write("Geography: Chicago precincts")
+
+# Divider
+st.sidebar.markdown("---")
+
+# Project information
+st.sidebar.markdown("#### **Project Team**")
+st.sidebar.write("Rajat Kanti Paul")
+st.sidebar.write("Sakkhi Raheel")
+
+st.sidebar.markdown("#### **Course**")
+st.sidebar.write("PPHA 30538 – Data Analytics & Visualization for Public Policy")
+
+st.sidebar.markdown("Harris School of Public Policy, University of Chicago")
+
+st.markdown("""
+<style>
+/* Sidebar background */
+[data-testid="stSidebar"] {
+    background-color: #00897B;
+}
+
+/* All sidebar text */
+[data-testid="stSidebar"] * {
+    color: white !important;
+}
+
+/* Markdown headings */
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    color: white !important;
+}
+
+/* Divider line */
+[data-testid="stSidebar"] hr {
+    border-color: rgba(255,255,255,0.3);
+}
+
+</style>
+""", unsafe_allow_html=True)
+
 #  WELCOME  PAGE
 if page == "Overview":
     st.title("Chicago Voter Turnout & Demographic Analysis")
@@ -166,15 +223,15 @@ if page == "Overview":
 
 This dashboard explores how **socioeconomic and demographic characteristics**
 of Chicago's neighborhoods relate to **voter turnout** across five presidential
-elections (2008, 2012, 2016, 2020, 2024).
+elections from 2008–2024.
 
 The project bridges two datasets that live at different geographic levels:
 
 * **American Community Survey (ACS) 5-Year Estimates** – demographic data
   (income, education, race, age, housing tenure) reported at the
-  **census-tract** level (~850 tracts in Chicago).
+  **census-tract** level.
 * **Chicago Board of Elections voter records** – precinct-level registration
-  and ballot counts (~1,200 precincts).
+  and ballot counts.
 
 Because census tracts and voting precincts **do not share boundaries**, we use
 **area-weighted spatial interpolation** (via `gpd.sjoin` and geometric
@@ -187,23 +244,21 @@ enabling direct comparison with turnout data.
 
     st.markdown(
             """
-**Income & Education**
-The strongest and most consistent positive correlations with turnout.
-Precincts in the highest income quintile consistently turn out at
-materially higher rates than those in the lowest quintile – a gap that
-persists across all five elections but narrows in high-enthusiasm years
-(2008, 2020).
+**Income & Education:**
+Income and education show the strongest and most consistent positive correlations with turnout. 
+Precincts with higher shares of college educated residents and higher income levels consistently 
+exhibit higher turnout rates than others. This gap persists across all five elections (2008 - 2024).
 
-**Youth Share**
+**Youth Share:**
 Precincts with more residents aged 18–29 tend to show lower turnout,
 consistent with national patterns of lower youth participation.
 
-**Renter Share**
+**Renter Share:**
 Consistently negatively correlated with turnout. Residential mobility
 disrupts registration and weakens the community ties that facilitate
 political participation.
 
-**Racial Composition**
+**Racial Composition:**
 In 2008 (Obama's first run), majority-Black precincts showed elevated
 turnout relative to other years – consistent with candidate-driven
 mobilization. In other cycles, higher minority share generally correlates
@@ -211,52 +266,57 @@ with lower turnout, reflecting structural barriers.
 
 """
         )
-
     st.markdown("### Data Sources")
-    st.table(
+
+    st.dataframe(
         pd.DataFrame(
-            {
-                "Source": [
-                    "U.S. Census Bureau ACS 5-Year",
-                    "Chicago Board of Elections",
-                    "Census Bureau TIGER/Line",
-                    "Chicago Data Portal",
-                ],
-                "Description": [
-                    "Demographic variables by census tract",
-                    "Precinct-level voter registration & ballots cast",
-                    "2020 census-tract boundary shapefiles",
-                    "Precinct boundary & city boundary GeoJSON files",
-                ],
-            }
-        )
-    )
+        {
+            "Source": [
+                "U.S. Census Bureau ACS 5-Year",
+                "Chicago Board of Elections",
+                "Census Bureau TIGER/Line",
+                "Chicago Data Portal",
+            ],
+            "Description": [
+                "Demographic variables by census tract",
+                "Precinct-level voter registration counts & ballots cast",
+                "2020 census-tract boundary shapefiles",
+                "Precinct boundary & city boundary GeoJSON files",
+            ],
+        }
+    ),
+    hide_index=True,
+    use_container_width=True,
+)
 
     st.markdown(
         """
 ### Policy Implications
-Turnout inequality remains spatially persistent across Chicago neighborhoods, with lower socioeconomic areas consistently showing 
-lower participation rates. These patterns suggest that residents in disadvantaged communities face greater barriers to political 
-participation. Among the demographic factors examined, education emerges as the most consistent predictor of turnout differences. 
-Overall, the findings point to a civic engagement gap driven more by differences in political awareness and institutional familiarity 
-than by purely financial constraints.
-
-*Navigate to the **Dashboard** page using the sidebar to explore the
-data interactively.*
+Turnout inequality remains spatially persistent across Chicago neighborhoods, with lower 
+socioeconomic areas consistently showing lower participation rates. These patterns suggest 
+that residents in disadvantaged communities face greater barriers to political participation. 
+Among the demographic factors examined, education emerges as the most consistent predictor of 
+turnout differences. Overall, the findings point to a civic engagement gap that appears to be 
+driven more by differences in political awareness and institutional familiarity than by purely 
+financial constraints. Reducing the barriers that education indirectly captures may therefore be 
+important for improving participation.
 """
     )
-
 
 #                            DASHBOARD  PAGE
 
 else:
-    st.title("Voter Turnout Dashboard")
+    st.markdown(
+        "<h1 style='text-align: center;'>Chicago Voter Turnout Dashboard</h1>",
+        unsafe_allow_html=True
+    )
 
-    # Load data
     master = load_master()
 
-    # 1. Summary Statistics Table
-    st.subheader("Demographic Statistics by Election Year")
+    st.markdown(
+        "<h3 style='text-align: center;'>Average Precinct Demographics by Election Year</h3>",
+        unsafe_allow_html=True
+    )
 
     summary = master.groupby("election_year").agg(
         avg_income_k=("median_hh_income", lambda x: x.dropna().mean() / 1000),
@@ -269,8 +329,6 @@ else:
 
     summary = summary.reset_index()
 
-    summary = summary.reset_index(drop=True)
-
     summary.columns = [
         "Election Year",
         "Avg Income ($K)", "Avg % College", "Avg % Black",
@@ -278,6 +336,7 @@ else:
     ]
 
     disp = summary.copy()
+
     pct_cols = [
         "Avg % College", "Avg % Black", "Avg % Hispanic",
         "Avg % Renter", "Avg % 18-29",
@@ -288,51 +347,85 @@ else:
     disp["Avg Income ($K)"] = "$" + disp["Avg Income ($K)"].round(1).astype(str) + "K"
     disp["Election Year"] = disp["Election Year"].astype(int)
 
-    # Fancy styling: colored header boxes, subtle row striping, right alignment
-    header_bg = "#32BD36"
+    header_bg = "#00897B"
     header_text = "#ffffff"
-
     styled = (
-        disp.style
-        .hide(axis="index")
-        .set_table_styles(
-            [
-                {
-                    "selector": "th",
-                    "props": [
-                        ("background-color", header_bg),
-                        ("color", header_text),
-                        ("font-weight", "600"),
-                        ("padding", "6px 8px"),
-                        ("text-align", "center"),
-                    ],
-                },
-            ]
-        )
-    )
+    disp.style
+    .hide(axis="index")
+    .set_table_styles([
+        {
+            "selector": "table",
+            "props": [
+                ("margin", "0 auto"),
+                ("border-collapse", "collapse"),
+                ("width", "100%"),
+            ],
+        },
+        {
+            "selector": "th",
+            "props": [
+                ("background-color", header_bg),
+                ("color", header_text),
+                ("font-weight", "600"),
+                ("padding", "10px 16px"),
+                ("text-align", "center"),
+                ("white-space", "nowrap"),
+            ],
+        },
+        {
+            "selector": "td",
+            "props": [
+                ("padding", "10px 16px"),
+                ("text-align", "center"),
+                ("white-space", "nowrap"),
+            ],
+        },
+        {
+            "selector": "tbody tr:nth-child(even)",
+            "props": [
+                ("background-color", "#f7f9f9"),
+            ],
+        },
+        {
+            "selector": "tbody tr:hover",
+            "props": [
+                ("background-color", "#e0f2f1"),
+            ],
+        },
+    ])
+)
 
+    table_html = styled.to_html(index=False)
+
+    left, center, right = st.columns([0.5, 8, 1.5])
+    with center:
+        st.markdown(table_html, unsafe_allow_html=True)
+
+
+    # 2. Year Selector
     st.markdown(
-        styled.to_html(index=False),
-        unsafe_allow_html=True,
+    "<p style='text-align:center; font-size:18px; font-weight:700; letter-spacing:0.5px; color:#333;'>Election Year</p>",
+    unsafe_allow_html=True
     )
 
+    left_pad, center_col, right_pad = st.columns([1, 4, 1])
 
-    # 2. Year Selector (centered)
-    col_left, col_center, col_right = st.columns([1, 1, 1])
-
-    
-    with col_center:
-        selected_year = st.segmented_control(
-            "",
-            options=ELECTION_YEARS,
-            selection_mode="single",
-            default=2024,
-            format_func=lambda y: str(y),
-            key="year_segmented",
-            width="content",
-        )
-
+    with center_col:
+        selected_year = st.slider(
+        "",
+        min_value=2008,
+        max_value=2024,
+        value=2024,
+        step=4,
+        key="year_slider"
+    )
     year_data = master[master["election_year"] == selected_year].copy()
+    
+    # Caption
+    st.markdown(
+    "<p style='font-size:18px; font-weight:700; letter-spacing:0.5px; color:#333;'>Quick Facts about Chicago</p>",
+    unsafe_allow_html=True
+    )
 
     # Styled info cards for the selected year
     n_precincts = len(year_data)
@@ -376,10 +469,10 @@ else:
         
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 3. Two-column layout: Choropleth | Scatter 
+    # 3. Two-column layout: Choropleth | Scatter
     col_map, col_scatter = st.columns(2)
 
-    # LEFT: Choropleth – Turnout Rate by Precinct (pydeck) 
+    # LEFT: Choropleth – Turnout Rate by Precinct (pydeck)
     with col_map:
         st.subheader(f"Turnout Rate by Precinct – {selected_year}")
 
@@ -393,8 +486,8 @@ else:
             how="left",
         )
 
-        # ★ FIX: drop precincts with no turnout data (removes grey NA areas)
-        map_merge = map_merge[map_merge["turnout_rate"].notna()].copy()
+        # Keep all precincts, including ones with missing turnout
+        map_merge = map_merge.copy()
 
         map_geo = gpd.GeoDataFrame(
             map_merge, geometry="geometry"
@@ -402,21 +495,24 @@ else:
 
         # Build GeoJSON with injected fill colours
         geo_json = json.loads(map_geo.to_json())
+
         for feat in geo_json["features"]:
             rate = feat["properties"].get("turnout_rate")
-            feat["properties"]["fill_color"] = turnout_to_color(rate)
-            feat["properties"]["turnout_pct"] = (
-                f"{rate * 100:.1f}%"
-                if rate is not None and not pd.isna(rate)
-                else "N/A"
-            )
+
+            if rate is None or pd.isna(rate):
+                # camouflage green for missing turnout
+                feat["properties"]["fill_color"] = [140, 190, 90, 160]
+                feat["properties"]["turnout_pct"] = "No data"
+            else:
+                feat["properties"]["fill_color"] = turnout_to_color(rate)
+                feat["properties"]["turnout_pct"] = f"{rate * 100:.1f}%"
 
         layer = pdk.Layer(
             "GeoJsonLayer",
             data=geo_json,
             get_fill_color="properties.fill_color",
-            get_line_color=[255, 255, 255, 120],
-            get_line_width=10,
+            get_line_color=[255, 255, 255, 180],
+            get_line_width=40,
             pickable=True,
             stroked=True,
             filled=True,
@@ -432,11 +528,13 @@ else:
         deck = pdk.Deck(
             layers=[layer],
             initial_view_state=view,
-            map_style="mapbox://styles/mapbox/light-v10",
+            map_provider="carto",
+            map_style="light",
             tooltip={
                 "text": "Precinct: {precinct_id}\nTurnout: {turnout_pct}"
             },
         )
+
         st.pydeck_chart(deck, height=520, key=f"deck_{selected_year}")
 
         # Colour legend
@@ -462,7 +560,7 @@ else:
         demo_choice = st.radio(
             "Select Demographic Variable",
             list(DEMO_OPTIONS.keys()),
-            index=2,
+            index=0,
             horizontal=True,
         )
 
