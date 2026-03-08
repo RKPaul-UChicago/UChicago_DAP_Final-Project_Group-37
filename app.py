@@ -150,7 +150,7 @@ def load_precinct_gdf(year):
 
 #  Sidebar navigation 
 # Navigation
-page = st.sidebar.radio("#### **Navigation**", ["Overview", "Dashboard"], index=0)
+page = st.sidebar.markdown("#### **Navigation**", ["Overview", "Dashboard"], index=0)
 
 # Divider
 st.sidebar.markdown("---")
