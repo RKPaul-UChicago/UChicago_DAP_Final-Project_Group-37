@@ -478,6 +478,14 @@ else:
 
         # Load the year-specific precinct geometry
         prec_gdf = load_precinct_gdf(selected_year)
+        prec_gdf = prec_gdf.copy()
+        year_data = year_data.copy()
+
+        prec_gdf["precinct_id"] = (
+        prec_gdf["precinct_id"].astype(str).str.strip().str.replace(".0", "", regex=False)
+        .str.lstrip("0"))
+
+        year_data["precinct_id"] = (year_data["precinct_id"].astype(str).str.strip().str.replace(".0", "", regex=False).str.lstrip("0"))
 
         # Merge turnout onto that year's precincts
         map_merge = prec_gdf.merge(
@@ -499,9 +507,8 @@ else:
         for feat in geo_json["features"]:
             rate = feat["properties"].get("turnout_rate")
 
-            if rate is None or pd.isna(rate):
-                # camouflage green for missing turnout
-                feat["properties"]["fill_color"] = [140, 190, 90, 160]
+            if rate is None:
+                feat["properties"]["fill_color"] = [200,200,200,160]
                 feat["properties"]["turnout_pct"] = "No data"
             else:
                 feat["properties"]["fill_color"] = turnout_to_color(rate)
@@ -512,7 +519,7 @@ else:
             data=geo_json,
             get_fill_color="properties.fill_color",
             get_line_color=[255, 255, 255, 180],
-            get_line_width=40,
+            get_line_width=42,
             pickable=True,
             stroked=True,
             filled=True,
