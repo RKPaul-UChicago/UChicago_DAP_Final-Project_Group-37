@@ -42,14 +42,14 @@ PRECINCT_FILES = {
 
 # Radio-button label to master_panel column
 DEMO_OPTIONS = {
-    "SES Index": "ses_pca_0_100",
+    "SES": "ses_pca_0_100",
     "Median Income": "median_hh_income",
     "Education": "pct_college",
     "Age Distribution": "pct_18_29",
 }
 
 DEMO_AXIS_LABELS = {
-    "ses_pca_0_100": "Socioeconomic Status Index",
+    "ses_pca_0_100": "SES Index (PCA, 0-100)",
     "median_hh_income": "Median Household Income ($)",
     "pct_college": "Bachelor's Degree or Higher (%)",
     "pct_18_29": "Population Aged 18-29 (%)",
