@@ -3,8 +3,13 @@ title: |
   Who Votes in Chicago?\
   Participation and Representativeness in Presidential Elections, 2008-2024
 author:
+<<<<<<< HEAD
   - Rajat Kanti Paul (Section 4, RKPaul-UChicago)
   - Sakkhi Raheel (Section 1, Sakkhi28)
+=======
+  - Rajat Kanti Paul (Section 4, Tue-Thu 11:00 AM - 12:20 AM, RKPaul-UChicago)
+  - Sakkhi Raheel (Section 1, Mon-Wed 9:00 AM - 10:20 AM, Sakkhi28)
+>>>>>>> d8330a220edbe7430e246c00fcdd07c68f378133
 date: "March 09, 2026"
 format:
   pdf:
@@ -912,7 +917,11 @@ base = alt.Chart(plot_ses).properties(width=150, height=170)
 
 pts = (
     base
+<<<<<<< HEAD
     .mark_cicrle(size=10, opacity=0.45)
+=======
+    .mark_circle(size=10, opacity=0.45)
+>>>>>>> d8330a220edbe7430e246c00fcdd07c68f378133
     .encode(
         x=alt.X("ses_pca_0_100:Q", title="SES (PCA index)", scale=alt.Scale(domain=[0, 100])),
         y=alt.Y("turnout_pct:Q", title="Turnout (%)", scale=alt.Scale(domain=[0, 100])),
