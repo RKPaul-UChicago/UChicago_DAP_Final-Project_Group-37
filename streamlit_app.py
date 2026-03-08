@@ -25,8 +25,8 @@ alt.data_transformers.disable_max_rows()
 
 #  Constants & paths
 ROOT = Path(".")
-PRECINCT_DIR = ROOT / "Chicago precincts shapefiles"
-MASTER_CSV = ROOT / "data" / "master_panel.csv"
+PRECINCT_DIR = ROOT / "data"/ "raw-data"/"Chicago precincts shapefiles"
+MASTER_CSV = ROOT / "data"/ "derived-data" / "master_panel.csv"
 CRS_PROJ = "EPSG:26916"
 CRS_GEO = "EPSG:4326"
 
