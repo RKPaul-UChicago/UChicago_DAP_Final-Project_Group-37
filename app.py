@@ -259,9 +259,7 @@ disrupts registration and weakens the community ties that facilitate
 political participation.
 
 **Racial Composition:**
-In 2008 (Obama's first run), majority-Black precincts showed elevated
-turnout relative to other years – consistent with candidate-driven
-mobilization. In other cycles, higher minority share generally correlates
+Over the past five elections, higher minority share seems to correlate
 with lower turnout, reflecting structural barriers.
 
 """
