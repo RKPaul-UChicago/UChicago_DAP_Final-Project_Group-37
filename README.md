@@ -119,7 +119,7 @@ quarto render final_project.qmd
 ```
 
 This runs the entire pipeline from scratch: downloads ACS data via API, cleans voter turnout files, performs spatial interpolation, builds the master panel dataset, and generates all visualizations. 
-It takes approximately 15 minutes due to API calls and spatial overlay computations.
+It takes approximately 7-10 minutes due to API calls and spatial overlay computations.
 
 The Quarto file uses a Python ROOT variable to build all file paths:
 ```python
