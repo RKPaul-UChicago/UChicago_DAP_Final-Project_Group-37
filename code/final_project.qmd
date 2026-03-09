@@ -93,7 +93,7 @@ def display_altair_png(chart, scale=2):
         display(Image(filename=tmp.name))
 
 # Paths
-ROOT         = Path(__file__).resolve().parent.parent
+ROOT         = Path("..")
 
 # Raw data paths (input files)
 RAW_DATA     = ROOT / "data" / "raw-data"
