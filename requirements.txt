@@ -1,0 +1,16 @@
+streamlit
+pandas
+numpy
+geopandas
+altair
+pydeck
+scikit-learn
+linearmodels
+statsmodels
+seaborn
+vl-convert-python
+xlrd
+requests
+openpyxl
+lxml
+html5lib

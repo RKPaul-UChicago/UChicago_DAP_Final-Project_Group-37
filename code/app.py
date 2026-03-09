@@ -1,6 +1,6 @@
 """
 Chicago Voter Turnout and Demographic Dashboard
-Streamlit app for Group 37 - Rajat Kanti Paul and Sakkhi Raheel
+Group 37 - Rajat Kanti Paul and Sakkhi Raheel
 Run with: streamlit run app.py
 """
 
@@ -24,7 +24,7 @@ st.set_page_config(
 alt.data_transformers.disable_max_rows()
 
 #  Constants & paths
-ROOT = Path(".")
+ROOT = Path(__file__).resolve().parent.parent
 PRECINCT_DIR = ROOT / "data"/ "raw-data"/"Chicago precincts shapefiles"
 MASTER_CSV = ROOT / "data"/ "derived-data" / "master_panel.csv"
 CRS_PROJ = "EPSG:26916"
@@ -42,14 +42,14 @@ PRECINCT_FILES = {
 
 # Radio-button label to master_panel column
 DEMO_OPTIONS = {
-    "SES": "ses_pca_0_100",
-    "Median Income": "median_hh_income",
+    "Socioeconomic Status": "ses_pca_0_100",
+    "Income": "median_hh_income",
     "Education": "pct_college",
-    "Age Distribution": "pct_18_29",
+    "Age": "pct_18_29",
 }
 
 DEMO_AXIS_LABELS = {
-    "ses_pca_0_100": "SES Index (PCA, 0-100)",
+    "ses_pca_0_100": "SES Index (PCA)",
     "median_hh_income": "Median Household Income ($)",
     "pct_college": "Bachelor's Degree or Higher (%)",
     "pct_18_29": "Population Aged 18-29 (%)",
@@ -150,7 +150,7 @@ def load_precinct_gdf(year):
 
 #  Sidebar navigation 
 # Navigation
-page = st.sidebar.radio("#### **Navigation**", ["Overview", "Dashboard"], index=0)
+page = st.sidebar.radio("**Navigation**", ["Overview", "Dashboard"], index=0)
 
 # Divider
 st.sidebar.markdown("---")
@@ -259,9 +259,7 @@ disrupts registration and weakens the community ties that facilitate
 political participation.
 
 **Racial Composition:**
-In 2008 (Obama's first run), majority-Black precincts showed elevated
-turnout relative to other years – consistent with candidate-driven
-mobilization. In other cycles, higher minority share generally correlates
+Over the past five elections, higher minority share seems to correlate
 with lower turnout, reflecting structural barriers.
 
 """
@@ -501,7 +499,7 @@ else:
             map_merge, geometry="geometry"
         ).to_crs(CRS_GEO)
 
-        # Build GeoJSON with injected fill colours
+        # Build GeoJSON
         geo_json = json.loads(map_geo.to_json())
 
         for feat in geo_json["features"]:
@@ -519,7 +517,7 @@ else:
             data=geo_json,
             get_fill_color="properties.fill_color",
             get_line_color=[255, 255, 255, 180],
-            get_line_width=42,
+            get_line_width=40,
             pickable=True,
             stroked=True,
             filled=True,
