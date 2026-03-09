@@ -121,6 +121,19 @@ quarto render final_project.qmd
 This runs the entire pipeline from scratch: downloads ACS data via API, cleans voter turnout files, performs spatial interpolation, builds the master panel dataset, and generates all visualizations. 
 It takes approximately 15 minutes due to API calls and spatial overlay computations.
 
+The Quarto file uses a Python ROOT variable to build all file paths:
+```python
+ROOT = Path(os.getcwd()).resolve().parent
+```
+By default, this assumes that one would run the above bash code to render pdf report.
+
+In that case:
+- os.getcwd() is <project-root>/code.
+- Path(os.getcwd()).resolve().parent moves one level up to <project-root>.
+- All paths like ROOT / "data" / "raw-data" / ... point to the data/ folder shown in the directory tree above.
+
+If final_project.qmd is saved somewhere else or run it from a different working directory, ROOT must be updated so that it still points to the project’s top-level folder that contains code/ and data/.
+
 ### Run the Streamlit dashboard on Local System
 
 ```bash
