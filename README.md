@@ -55,7 +55,7 @@ The following files must be placed manually in `data/raw-data/` before running t
 Place `2008.xls`, `2012.xls`, `2016.xls`, `2020.xls`, `2024.xls` in `data/raw-data/Data - Voter turnout and registration(chicagoelections.gov)/`
 
 2. **Census tract shapefile** 
-from [TIGER/Line Shapefiles]: (https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html) 
+from [TIGER/Line Shapefiles](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html): 
 Download the 2020 Illinois tract shapefile and place all component files in `data/raw-data/Census Tract Shapefile (ACS Merging)/`
 
 3. **Precinct boundary GeoJSON files** 
