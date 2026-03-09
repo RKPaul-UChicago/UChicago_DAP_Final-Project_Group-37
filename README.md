@@ -6,7 +6,7 @@ PPHA 30538 - Data Analytics & Visualization for Public Policy - University of Ch
 ## Project Overview
 
 This project examines how socioeconomic and demographic characteristics of Chicago's neighborhoods relate to voter turnout across five presidential elections (2008, 2012, 2016, 2020, 2024).
-We combine precinct-level election results with Census demographic data using area-weighted spatial interpolation to create a unified precinct-by-year panel dataset. 
+We combined precinct-level election results with Census demographic data using area-weighted spatial interpolation to create a unified precinct-by-year panel dataset. 
 The analysis includes choropleth maps, scatter plots with a PCA-based socioeconomic status index, related hitmap and an interactive Streamlit dashboard.
 
 ### Streamlit Dashboard Online
@@ -68,7 +68,7 @@ Place the three precinct boundary files in `data/raw-data/Chicago precincts shap
 
 4. **City boundary GeoJSON** 
 from [Chicago Data Portal]: https://data.cityofchicago.org/Facilities-Geographic-Boundaries/Boundaries-City/qqq8-j68g/about_data 
-Place `Boundaries_-_City_20260206.geojson` in `data/raw-data/`
+Place `Boundaries_-_City_<date_of_download>.geojson` in `data/raw-data/`
 
 ACS demographic data is downloaded automatically via the Census API when the code runs.
 
@@ -107,7 +107,7 @@ The ACS data download uses the Census Bureau API. Set your API key as an environ
 export CENSUS_API_KEY="your_key"
 ```
 
-You can obtain a free key at [https://api.census.gov/data/key_signup.html](https://api.census.gov/data/key_signup.html). The code will still run without a key but may be rate-limited.
+One can obtain a free key at [https://api.census.gov/data/key_signup.html](https://api.census.gov/data/key_signup.html). The code will still run without a key but may be rate-limited.
 
 ## Running the Analysis
 
@@ -119,7 +119,7 @@ quarto render final_project.qmd
 ```
 
 This runs the entire pipeline from scratch: downloads ACS data via API, cleans voter turnout files, performs spatial interpolation, builds the master panel dataset, and generates all visualizations. 
-It takes approximately 15-20 minutes due to API calls and spatial overlay computations.
+It takes approximately 15 minutes due to API calls and spatial overlay computations.
 
 ### Run the Streamlit dashboard on Local System
 
