@@ -91,7 +91,6 @@ pip install -r requirements.txt
 - scikit-learn
 - linearmodels
 - statsmodels
-- seaborn
 - vl-convert-python
 - xlrd
 - requests
