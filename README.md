@@ -20,7 +20,7 @@ The dashboard provides interactive exploration of turnout patterns with a chorop
 .
 ├── code/
 │   ├── final_project.qmd        # Main analysis (renders to PDF)
-│   └── app.py                   # Interactive dashboard
+│   └── app.py                   # Creates interactive dashboard
 ├── data/
 │   ├── raw-data/
 │   │   ├── Boundaries_-_City_20260206.geojson
@@ -125,6 +125,7 @@ The Quarto file uses a Python ROOT variable to build all file paths:
 ```python
 ROOT = Path(os.getcwd()).resolve().parent
 ```
+
 By default, this assumes that one would run the above bash code to render pdf report.
 
 In that case:
@@ -132,7 +133,7 @@ In that case:
 - Path(os.getcwd()).resolve().parent moves one level up to <project-root>.
 - All paths like ROOT / "data" / "raw-data" / ... point to the data/ folder shown in the directory tree above.
 
-If final_project.qmd is saved somewhere else or run it from a different working directory, ROOT must be updated so that it still points to the project’s top-level folder that contains code/ and data/.
+If final_project.qmd is saved somewhere else or run it from a different working directory, ROOT must be updated so that it still points to the project’s top-level folder that contains code/ and data/ folders.
 
 ### Run the Streamlit dashboard on Local System
 
@@ -140,3 +141,17 @@ If final_project.qmd is saved somewhere else or run it from a different working 
 cd code
 streamlit run app.py
 ```
+
+The Streamlit app uses a ROOT variable to locate data and other project files:
+```python
+ROOT = Path(__file__).resolve().parent.parent
+```
+
+By default, this assumes the file app.py lives in the code/ folder and one runs the bash code given above to run streamlit app locally.
+
+In that setup:
+- __file__ is <project-root>/code/app.py.
+- Path(__file__).resolve().parent is <project-root>/code.
+- Path(__file__).resolve().parent.parent moves one level up to <project-root>.
+
+If app.py is moved or saved in a different location, ROOT must be updated so that it still evaluates to the directory that directly contains data/ folder.
