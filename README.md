@@ -9,6 +9,11 @@ This project examines how socioeconomic and demographic characteristics of Chica
 We combine precinct-level election results with Census demographic data using area-weighted spatial interpolation to create a unified precinct-by-year panel dataset. 
 The analysis includes choropleth maps, scatter plots with a PCA-based socioeconomic status index, related hitmap and an interactive Streamlit dashboard.
 
+### Streamlit Dashboard Online
+The dashboard is deployed at: https://uchicago-final-project-chicago-voter-turnout.streamlit.app
+
+The dashboard provides interactive exploration of turnout patterns with a choropleth map, demographic scatter plots, and summary statistics across election years.
+
 ## Repository Structure
 
 ```
@@ -116,13 +121,9 @@ quarto render final_project.qmd
 This runs the entire pipeline from scratch: downloads ACS data via API, cleans voter turnout files, performs spatial interpolation, builds the master panel dataset, and generates all visualizations. 
 It takes approximately 15-20 minutes due to API calls and spatial overlay computations.
 
-### Run the Streamlit dashboard
+### Run the Streamlit dashboard on Local System
 
 ```bash
 cd code
 streamlit run app.py
 ```
-
-The dashboard provides interactive exploration of turnout patterns with a choropleth map, demographic scatter plots, and summary statistics across election years.
-
-The dashboard is also deployed at: https://uchicago-final-project-chicago-voter-turnout.streamlit.app
