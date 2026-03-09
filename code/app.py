@@ -24,7 +24,7 @@ st.set_page_config(
 alt.data_transformers.disable_max_rows()
 
 #  Constants & paths
-ROOT = Path("..")
+ROOT = Path(__file__).resolve().parent.parent
 PRECINCT_DIR = ROOT / "data"/ "raw-data"/"Chicago precincts shapefiles"
 MASTER_CSV = ROOT / "data"/ "derived-data" / "master_panel.csv"
 CRS_PROJ = "EPSG:26916"
