@@ -67,7 +67,6 @@ import pandas as pd
 import numpy as np
 import geopandas as gpd
 import altair as alt
-import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from linearmodels.panel import PanelOLS
@@ -93,7 +92,7 @@ def display_altair_png(chart, scale=2):
         display(Image(filename=tmp.name))
 
 # Paths
-ROOT         = Path("..")
+ROOT         = Path(os.getcwd()).resolve().parent
 
 # Raw data paths (input files)
 RAW_DATA     = ROOT / "data" / "raw-data"
@@ -133,9 +132,6 @@ ACS_FILES = {
 DEMO_COLS      = ["median_hh_income", "pct_college", "pct_black",
                   "pct_hispanic", "pct_renter", "pct_18_29"]
 ELECTION_YEARS = [2008, 2012, 2016, 2020, 2024]
-
-# Create raw-data folder structure
-import shutil
 
 raw_folders = [
     "data/raw-data/Census Tract Shapefile (ACS Merging)",
