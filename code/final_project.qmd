@@ -1065,7 +1065,7 @@ Education emerges as the most consistent predictor of turnout differences, sugge
 
 ### Interactive Dashboard and Policy Use
 
-In addition to the static analysis presented in this report, we developed an interactive dashboard that allows users to explore Chicago’s voter turnout patterns across precincts and election years. This tool can support election administrators, local governments, and civic organizations in identifying neighborhoods where voter engagement initiatives may have the greatest impact. It can also help campaign strategists and mobilization groups locate areas where turnout potential appears underutilized and where targeted outreach may be most effective. (https://final-project-chicago-voter-turnout.streamlit.app)
+In addition to the static analysis presented in this report, we developed an interactive dashboard that allows users to explore Chicago’s voter turnout patterns across precincts and election years. This tool can support election administrators, local governments, and civic organizations in identifying neighborhoods where voter engagement initiatives may have the greatest impact. It can also help campaign strategists and mobilization groups locate areas where turnout potential appears underutilized and where targeted outreach may be most effective. (https://uchicago-final-project-chicago-voter-turnout.streamlit.app)
 
 ### Limitations
 
